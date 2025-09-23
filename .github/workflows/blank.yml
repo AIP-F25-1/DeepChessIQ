@@ -26,4 +26,5 @@ jobs:
           ./gradlew sonarqube \
             -Dsonar.projectKey=DeepChessIQ \
             -Dsonar.host.url=https://sonarqube.io \
-            -Dsonar.login=$(4fa64298ea7d3a275e3bc359a8f575ac816aaeeb)
+            -Dsonar.login=$SONAR_TOKEN
+
