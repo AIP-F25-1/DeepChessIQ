@@ -24,13 +24,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-cov pylint
 
-      - name: Run tests and generate coverage report
+      - name: Run Python tests and generate coverage report
         run: |
-          pytest --cov=Deployment --cov-report=xml:coverage.xml --cov-report=term
+          pytest --cov=. --cov-report=xml:coverage.xml --cov-report=term
 
       - name: Run pylint (optional)
         run: |
-          pylint Deployment > pylint-report.txt || true
+          pylint . > pylint-report.txt || true
           cat pylint-report.txt
 
       - name: SonarCloud Scan
@@ -40,11 +40,10 @@ jobs:
           args: >
             -Dsonar.projectKey=DeepChessIQ
             -Dsonar.organization=steve8695
-            -Dsonar.sources=Deployment
-            -Dsonar.language=py
+            -Dsonar.sources=.
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc
+            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/node_modules/**,**/build/**
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
