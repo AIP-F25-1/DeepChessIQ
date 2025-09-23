@@ -29,6 +29,7 @@ jobs:
       - name: Run Python tests and generate coverage report
         run: |
           pytest --cov=. --cov-report=xml:coverage.xml --cov-report=term
+    
 
       - name: Run pylint (optional)
         run: |
