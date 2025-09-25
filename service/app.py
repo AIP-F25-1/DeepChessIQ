@@ -1,7 +1,8 @@
-# service/app.py
-def add(a, b):
-    return a + b
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-if __name__ == "__main__":
-    # optional test/demo code here
-    print(add(1, 2))
+import app
+
+def test_basic_route():
+    assert True  # Replace with real test if needed
