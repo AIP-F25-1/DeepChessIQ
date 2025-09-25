@@ -13,6 +13,9 @@ jobs:
     name: Sonar_new
     runs-on: ubuntu-latest
 
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -32,10 +35,10 @@ jobs:
             -Dsonar.projectKey=5dfcbe88ac815fb9f2d1bfde653b5e32edfb63d1
             -Dsonar.organization=DeepChessIQ
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.login=$SONAR_TOKEN
 
       - name: SonarQube Quality Gate
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         with:
           sonar_host_url: https://sonarcloud.io
-          sonar_token: ${{ secrets.SONAR_TOKEN }}
+          sonar_token: ${{ env.SONAR_TOKEN }}
