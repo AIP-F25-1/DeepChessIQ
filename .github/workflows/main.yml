@@ -1,13 +1,10 @@
 name: SonarQube New
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-
 jobs:
   sonarqube:
     name: Sonar_new
