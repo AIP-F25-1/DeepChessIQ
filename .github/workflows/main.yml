@@ -36,15 +36,19 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt || true
           pip install pytest pytest-cov pylint
-        
-      - name: SonarQube Scan
+
+      - name: Run tests with coverage
+        run: pytest --cov=service --cov-branch --cov-report=xml:coverage.xml --cov-report=term
+
+      - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=5dfcbe88ac815fb9f2d1bfde653b5e32edfb63d1
             -Dsonar.organization=steve8695
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.login=$SONAR_TOKEN
-
-
+            -Dsonar.python.coverage.reportPaths=coverage.xml
