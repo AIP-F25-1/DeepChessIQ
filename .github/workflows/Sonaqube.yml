@@ -28,7 +28,10 @@ jobs:
 
       - name: Run Python tests and generate coverage report
         run: |
-          pytest --cov=. --cov-report=xml:coverage.xml --cov-report=term
+          #pytest --cov=. --cov-report=xml:coverage.xml --cov-report=term
+          pytest --cov=service --cov-branch --cov-report=xml:coverage.xml --cov-report=term
+          #pytest --cov=. --cov-branch --cov-report=xml:coverage.xml --cov-report=term || echo "No tests found, skipping coverage"
+
     
 
       - name: Run pylint (optional)
