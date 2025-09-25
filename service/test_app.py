@@ -13,6 +13,6 @@ import test_app
 
 def test_basic_route():
     # call a function from app.py
-    result = app.some_function()
+    result = test_app.some_function()
     assert result == expected_value
 
