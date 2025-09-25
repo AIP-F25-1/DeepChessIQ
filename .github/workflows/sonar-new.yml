@@ -37,7 +37,8 @@ jobs:
           pip install pytest pytest-cov pylint
 
       - name: Run tests with coverage
-        run: pytest --cov=. --cov-branch --cov-report=xml:coverage.xml --cov-report=term
+        run: pytest tests/ --cov=service --cov-branch --cov-report=xml:coverage.xml --cov-report=term
+
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
