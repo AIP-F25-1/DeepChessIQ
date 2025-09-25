@@ -29,7 +29,6 @@ jobs:
           pytest --cov=service --cov-report=xml:coverage.xml --cov-report=term
 
 
-
       - name: Run pylint (optional)
         run: |
           pylint service > pylint-report.txt || true
