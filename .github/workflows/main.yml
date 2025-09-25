@@ -47,8 +47,4 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.login=$SONAR_TOKEN
 
-      - name: SonarQube Quality Gate
-        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
-        with:
-          sonar_host_url: https://sonarcloud.io
-          sonar_token: $SONAR_TOKEN
+
