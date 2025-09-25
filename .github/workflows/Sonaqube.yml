@@ -42,7 +42,7 @@ jobs:
           projectBaseDir: .
           args: >
             -Dsonar.projectKey=DeepChessIQ
-            -Dsonar.organization=steve8695
+            -Dsonar.organization=Steve8695
             -Dsonar.sources=.
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.python.coverage.reportPaths=coverage.xml
