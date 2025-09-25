@@ -9,7 +9,7 @@ def test_basic_route():
 
 
 # service/test_app.py
-from service import app
+import test_app
 
 def test_basic_route():
     # call a function from app.py
