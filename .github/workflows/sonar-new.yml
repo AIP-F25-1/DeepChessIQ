@@ -39,7 +39,7 @@ jobs:
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.projectKey=DeepChessIQ
+            -Dsonar.projectKey=5dfcbe88ac815fb9f2d1bfde653b5e32edfb63d1
             -Dsonar.organization=steve8695
             -Dsonar.sources=service
             -Dsonar.language=py
