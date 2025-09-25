@@ -26,7 +26,8 @@ jobs:
 
       - name: Run tests and generate coverage report
         run: |
-          pytest --cov=service --cov-branch --cov-report=xml:coverage.xml --cov-report=term
+          pytest tests/ --cov=service --cov-branch --cov-report=xml:coverage.xml --cov-report=term
+
 
 
       - name: Run pylint (optional)
