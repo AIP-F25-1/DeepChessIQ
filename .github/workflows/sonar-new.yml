@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - main
-      - preprod
-      - dev
 
 jobs:
   sonarcloud:
@@ -26,30 +24,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-cov pylint
 
-      - name: Run Python tests and generate coverage report
+      - name: Run tests and generate coverage report
         run: |
-          pytest --cov=service --cov-branch --cov-report=xml:coverage.xml --cov-report=term 
-          
-
-      - name: Run pylint (optional)
-        run: |
-          pylint . > pylint-report.txt || true
-          cat pylint-report.txt
-
+          pytest --cov=service --cov-report=xml:coverage.xml --cov-report=term
+      
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.projectKey=5dfcbe88ac815fb9f2d1bfde653b5e32edfb63d1
-            -Dsonar.projectName=DeepChessIQ
-            -Dsonar.projectVersion=1.0
+            -Dsonar.projectKey=DeepChessIQ
             -Dsonar.organization=steve8695
-            -Dsonar.sources=.
+            -Dsonar.sources=service
+            -Dsonar.language=py
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/node_modules/**,**/build/**
+            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc
             -Dsonar.verbose=true
-          
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
