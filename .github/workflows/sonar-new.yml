@@ -26,7 +26,7 @@ jobs:
 
       - name: Run tests and generate coverage report
         run: |
-          pytest tests/ --cov=service --cov-branch --cov-report=xml:coverage.xml --cov-report=term
+          pytest --cov=service --cov-report=xml:coverage.xml --cov-report=term
 
 
 
