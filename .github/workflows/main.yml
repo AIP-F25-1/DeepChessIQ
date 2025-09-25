@@ -1,0 +1,41 @@
+name: SonarQube New
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sonarqube:
+    name: Sonar_new
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for SonarQube to analyze branches
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          args: >
+            -Dsonar.projectKey=5dfcbe88ac815fb9f2d1bfde653b5e32edfb63d1
+            -Dsonar.organization=DeepChessIQ
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+      - name: SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+        with:
+          sonar_host_url: https://sonarcloud.io
+          sonar_token: ${{ secrets.SONAR_TOKEN }}
