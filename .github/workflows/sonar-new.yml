@@ -27,19 +27,13 @@ jobs:
       - name: Run tests and generate coverage report
         run: |
           pytest --cov=service --cov-report=xml:coverage.xml --cov-report=term
-
-
-      - name: Run pylint (optional)
-        run: |
-          pylint service > pylint-report.txt || true
-          cat pylint-report.txt
-
+      
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
         with:
           projectBaseDir: .
           args: >
-            -Dsonar.projectKey=5dfcbe88ac815fb9f2d1bfde653b5e32edfb63d1
+            -Dsonar.projectKey=DeepChessIQ
             -Dsonar.organization=steve8695
             -Dsonar.sources=service
             -Dsonar.language=py
@@ -49,3 +43,4 @@ jobs:
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
