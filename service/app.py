@@ -1,2 +1,7 @@
-def main():
-  return none
+# service/app.py
+
+def add(a, b):
+    return a + b
+
+def multiply(a, b):
+    return a * b
