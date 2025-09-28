@@ -1,8 +1,0 @@
-.feature-card { background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.08), transparent 60%), linear-gradient(170deg, rgba(26,29,40,0.95) 0%, rgba(12,13,18,0.96) 100%); border: 1px solid rgba(255,255,255,0.07); border-radius: 24px; padding: 1.9rem 1.6rem; text-align: center; color: #f0f0f0; box-shadow: 0 28px 48px rgba(0,0,0,0.32); transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
-.feature-card:hover { transform: translateY(-12px); box-shadow: 0 40px 65px rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.12); }
-.feature-card-accent { background: linear-gradient(160deg, rgba(199,98,73,0.95) 0%, rgba(120,47,39,0.95) 85%, rgba(90,36,28,0.95) 100%); border-color: rgba(255,160,130,0.55); }
-.feature-card-accent .feature-desc { color: #ffeae0; }
-.feature-icon { font-size: 2.6rem; line-height: 1; margin-bottom: 1.1rem; color: #ffffff; opacity: 0.92; }
-.feature-title { font-weight: 800; font-size: 1.24rem; margin-bottom: 0.45rem; letter-spacing: 0.01em; }
-.feature-desc { color: #c5c5c5; font-size: 1rem; }
-
