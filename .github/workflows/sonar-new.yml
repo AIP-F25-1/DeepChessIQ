@@ -3,7 +3,7 @@ name: Sonar_build_local
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
   build:
