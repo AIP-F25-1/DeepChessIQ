@@ -1,19 +1,21 @@
-name: SonarCloud Scan
+name: Build
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
 
 jobs:
-  sonarcloud:
+  build:
+    name: Build and analyze
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history improves analysis
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -23,24 +25,20 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-cov pylint
-
+      
       - name: Run tests and generate coverage report
         run: |
           pytest --cov=service --cov-report=xml:coverage.xml --cov-report=term
       
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=5dfcbe88ac815fb9f2d1bfde653b5e32edfb63d1
-            -Dsonar.organization=steve8695
-            -Dsonar.sources=service
-            -Dsonar.language=py
-            -Dsonar.sourceEncoding=UTF-8
-            -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc
-            -Dsonar.verbose=true
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
+          SONAR_HOST_URL: http://20.55.88.222:9000
+      
+      # Optional: fail job if Quality Gate fails
+      # - name: SonarQube Quality Gate check
+      #   uses: SonarSource/sonarqube-quality-gate-action@v1
+      #   timeout-minutes: 5
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
