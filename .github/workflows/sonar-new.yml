@@ -1,4 +1,4 @@
-name: Build
+name: Sonar_build_local
 
 on:
   push:
@@ -32,10 +32,18 @@ jobs:
       
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          args: >
+            -Dsonar.projectKey=DeepChessIQ
+            -Dsonar.projectName=DeepChessIQ
+            -Dsonar.sources=service
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: http://20.55.88.222:9000
-      
+
       # Optional: fail job if Quality Gate fails
       # - name: SonarQube Quality Gate check
       #   uses: SonarSource/sonarqube-quality-gate-action@v1
