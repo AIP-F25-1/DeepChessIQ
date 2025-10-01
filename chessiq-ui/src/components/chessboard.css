@@ -1,7 +1,45 @@
 .chessboard-wrapper {
   display: grid;
-  gap: 12px;
-  justify-items: center;
+  grid-template-columns: 260px auto 260px;
+  align-items: start;
+  gap: 16px;
+}
+
+.right-spacer { width: 100%; height: 1px; opacity: 0; }
+
+.timers-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
+  position: sticky;
+  top: 12px;
+}
+
+.timer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+  padding: 14px 16px;
+  background: linear-gradient(140deg, rgba(34,36,45,0.92) 0%, rgba(17,18,24,0.96) 55%, rgba(12,13,18,0.98) 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  color: #f7f7fb;
+  box-shadow: 0 16px 28px rgba(0,0,0,0.28);
+}
+
+.timer-label {
+  font-size: 13px;
+  color: #8a8d96;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.timer-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .chessboard-grid {
@@ -82,6 +120,16 @@
   visibility: hidden;
 }
 
+@media (max-width: 900px) {
+  .chessboard-wrapper {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .timers-bar { position: static; width: 100%; max-width: calc(44px * 8); flex-direction: row; }
+  .timer-card { min-width: 0; flex: 1; }
+  .right-spacer { display: none; }
+}
+
 @media (max-width: 560px) {
   .chessboard-grid {
     grid-template-columns: repeat(8, 44px);
@@ -89,6 +137,8 @@
   }
   .square { width: 44px; height: 44px; font-size: 24px; }
   .board-axes { width: calc(44px * 8); }
+  .timers-bar { gap: 8px; }
+  .timer-card { padding: 10px 12px; }
 }
 
 

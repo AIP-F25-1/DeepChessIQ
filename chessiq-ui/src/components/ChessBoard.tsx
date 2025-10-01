@@ -1,4 +1,5 @@
 import './chessboard.css'
+import { useEffect, useState } from 'react'
 import { useChessGame } from '../hooks/useChessGame'
 
 type Square = {
@@ -20,7 +21,21 @@ function buildBoard(): Square[] {
 
 function ChessBoard() {
   const squares = buildBoard()
-  const { pieces, selected, setSelected, legalMovesFrom, tryMove, turn, lastMove } = useChessGame()
+  const { pieces, selected, setSelected, legalMovesFrom, tryMove, turn, lastMove, gameStartAt, lastMoveAt } = useChessGame()
+  const [nowTs, setNowTs] = useState<number>(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const formatDuration = (ms: number) => {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    if (hours > 0) return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    return `${minutes}:${String(seconds).padStart(2, '0')}`
+  }
 
   const coordsToName = (file: number, rank: number) => `${String.fromCharCode(96 + file)}${rank}` as const
 
@@ -64,7 +79,18 @@ function ChessBoard() {
 
   return (
     <div className="chessboard-wrapper">
-      <div className="chessboard-grid" role="grid" aria-label="Chessboard">
+      <div className="timers-bar" aria-label="Game timers">
+        <div className="timer-card">
+          <span className="timer-label">Total</span>
+          <span className="timer-value">{formatDuration(nowTs - gameStartAt)}</span>
+        </div>
+        <div className="timer-card">
+          <span className="timer-label">Since last move</span>
+          <span className="timer-value">{formatDuration(lastMoveAt ? nowTs - lastMoveAt : nowTs - gameStartAt)}</span>
+        </div>
+      </div>
+      <div className="board-stack">
+        <div className="chessboard-grid" role="grid" aria-label="Chessboard">
         {squares.map((sq) => {
           const name = coordsToName(sq.file, sq.rank)
           const isSelected = selected === (name as any)
@@ -86,19 +112,21 @@ function ChessBoard() {
             </button>
           )
         })}
-      </div>
-      <div className="board-axes">
-        <div className="files">
-          {['a','b','c','d','e','f','g','h'].map((f) => (
-            <span key={f}>{f}</span>
-          ))}
         </div>
-        <div className="ranks">
-          {[8,7,6,5,4,3,2,1].map((r) => (
-            <span key={r}>{r}</span>
-          ))}
+        <div className="board-axes">
+          <div className="files">
+            {['a','b','c','d','e','f','g','h'].map((f) => (
+              <span key={f}>{f}</span>
+            ))}
+          </div>
+          <div className="ranks">
+            {[8,7,6,5,4,3,2,1].map((r) => (
+              <span key={r}>{r}</span>
+            ))}
+          </div>
         </div>
       </div>
+      <div className="right-spacer" aria-hidden="true" />
     </div>
   )
 }

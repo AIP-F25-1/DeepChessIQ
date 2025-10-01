@@ -12,6 +12,8 @@ export function useChessGame() {
   const [fen, setFen] = useState(engineRef.current.fen())
   const [lastMove, setLastMove] = useState<{ from: SquareName; to: SquareName } | null>(null)
   const [selected, setSelected] = useState<SquareName | null>(null)
+  const [gameStartAt, setGameStartAt] = useState<number>(() => Date.now())
+  const [lastMoveAt, setLastMoveAt] = useState<number | null>(null)
 
   const pieces: BoardPiece[] = useMemo(() => {
     //const board = engineRef.current.board()
@@ -43,6 +45,7 @@ export function useChessGame() {
       setFen(engineRef.current.fen())
       setLastMove({ from: res.from as SquareName, to: res.to as SquareName })
       setSelected(null)
+      setLastMoveAt(Date.now())
       return true
     }
     return false
@@ -52,6 +55,10 @@ export function useChessGame() {
     engineRef.current = new Chess()
     setFen(engineRef.current.fen())
     setSelected(null)
+    setLastMove(null)
+    const now = Date.now()
+    setGameStartAt(now)
+    setLastMoveAt(null)
   }, [])
 
   return {
@@ -63,6 +70,8 @@ export function useChessGame() {
     tryMove,
     reset,
     lastMove,
+    gameStartAt,
+    lastMoveAt,
     turn: engineRef.current.turn() as Color,
     inCheck: engineRef.current.inCheck?.() ?? engineRef.current.isCheck?.(),
     gameOver: engineRef.current.isGameOver?.() ?? engineRef.current.isGameOver(),
