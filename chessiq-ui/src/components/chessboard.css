@@ -6,8 +6,8 @@
 
 .chessboard-grid {
   display: grid;
-  grid-template-columns: repeat(8, 56px);
-  grid-template-rows: repeat(8, 56px);
+  grid-template-columns: repeat(8, 72px);
+  grid-template-rows: repeat(8, 72px);
   border: 2px solid #222;
   border-radius: 8px;
   overflow: hidden;
@@ -15,16 +15,51 @@
 }
 
 .square {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 32px;
 }
 
-.square.light {
-  background: #f0d9b5;
+.square.light { background: #f0d9b5; }
+.square.dark { background: #b58863; }
+
+.square.last-move.light { background: #f6f669; }
+.square.last-move.dark { background: #bfcf53; }
+
+.square.selected {
+  outline: 3px solid #4f46e5;
+  outline-offset: -3px;
 }
 
-.square.dark {
-  background: #b58863;
+.square.target::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.6);
+}
+
+.piece {
+  user-select: none;
+}
+
+.piece-img {
+  width: 80%;
+  height: 80%;
+  pointer-events: none;
+}
+
+.coord {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  font-size: 10px;
+  color: rgba(0,0,0,0.6);
 }
 
 .board-axes {
@@ -49,11 +84,11 @@
 
 @media (max-width: 560px) {
   .chessboard-grid {
-    grid-template-columns: repeat(8, 40px);
-    grid-template-rows: repeat(8, 40px);
+    grid-template-columns: repeat(8, 44px);
+    grid-template-rows: repeat(8, 44px);
   }
-  .square { width: 40px; height: 40px; }
-  .board-axes { width: calc(40px * 8); }
+  .square { width: 44px; height: 44px; font-size: 24px; }
+  .board-axes { width: calc(44px * 8); }
 }
 
 

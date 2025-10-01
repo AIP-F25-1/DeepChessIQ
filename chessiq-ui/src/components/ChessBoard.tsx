@@ -1,4 +1,5 @@
 import './chessboard.css'
+import { useChessGame } from '../hooks/useChessGame'
 
 type Square = {
   file: number
@@ -19,17 +20,72 @@ function buildBoard(): Square[] {
 
 function ChessBoard() {
   const squares = buildBoard()
+  const { pieces, selected, setSelected, legalMovesFrom, tryMove, turn, lastMove } = useChessGame()
+
+  const coordsToName = (file: number, rank: number) => `${String.fromCharCode(96 + file)}${rank}` as const
+
+  const handleSquareClick = (file: number, rank: number) => {
+    const name = coordsToName(file, rank) as any
+    if (selected) {
+      if (selected === name) {
+        setSelected(null)
+        return
+      }
+      const legalTargets = legalMovesFrom(selected)
+      if (legalTargets.includes(name)) {
+        tryMove(selected as any, name as any)
+        return
+      }
+      // if clicked friendly piece, switch selection
+      const targetPiece = pieces.find((p) => p.square === name)
+      const selectedPiece = pieces.find((p) => p.square === selected)
+      if (targetPiece && selectedPiece && targetPiece.color === selectedPiece.color) {
+        setSelected(name)
+      } else {
+        setSelected(null)
+      }
+    } else {
+      // select only if it's the side to move
+      const piece = pieces.find((p) => p.square === name)
+      if (piece && ((turn === 'w' && piece.color === 'w') || (turn === 'b' && piece.color === 'b'))) {
+        setSelected(name)
+      }
+    }
+  }
+
+  const renderPiece = (squareName: string) => {
+    const piece = pieces.find((p) => p.square === (squareName as any))
+    if (!piece) return null
+    const key = `${piece.square}-${piece.type}-${piece.color}`
+    const code = `${piece.color === 'w' ? 'w' : 'b'}${piece.type.toUpperCase()}`
+    const src = `https://lichess1.org/assets/piece/cburnett/${code}.svg`
+    return <img key={key} className="piece-img" src={src} alt={code} draggable={false} />
+  }
+
   return (
     <div className="chessboard-wrapper">
       <div className="chessboard-grid" role="grid" aria-label="Chessboard">
-        {squares.map((sq) => (
-          <div
-            key={`${sq.file}-${sq.rank}`}
-            className={`square ${sq.isDark ? 'dark' : 'light'}`}
-            role="gridcell"
-            aria-label={`Square ${String.fromCharCode(96 + sq.file)}${sq.rank}`}
-          />
-        ))}
+        {squares.map((sq) => {
+          const name = coordsToName(sq.file, sq.rank)
+          const isSelected = selected === (name as any)
+          const isLastMove = lastMove ? lastMove.from === (name as any) || lastMove.to === (name as any) : false
+          const isTarget = selected ? legalMovesFrom(selected).includes(name as any) : false
+          return (
+            <button
+              type="button"
+              key={`${sq.file}-${sq.rank}`}
+              className={`square ${sq.isDark ? 'dark' : 'light'} ${isSelected ? 'selected' : ''} ${isTarget ? 'target' : ''} ${isLastMove ? 'last-move' : ''}`}
+              aria-label={`Square ${name}`}
+              onClick={() => handleSquareClick(sq.file, sq.rank)}
+            >
+              {renderPiece(name)}
+              <span className="coord">
+                {sq.file === 1 ? sq.rank : ''}
+                {sq.rank === 1 ? String.fromCharCode(96 + sq.file) : ''}
+              </span>
+            </button>
+          )
+        })}
       </div>
       <div className="board-axes">
         <div className="files">
