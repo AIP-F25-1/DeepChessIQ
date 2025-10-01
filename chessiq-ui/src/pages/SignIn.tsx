@@ -17,7 +17,7 @@ function SignInPage() {
     const status = await signIn(form)
     setIsLoading(false)
     if (status === 'ok') {
-      navigate('/')
+      navigate('/dashboard')
     } else {
       setError('Invalid credentials. Please try again.')
     }

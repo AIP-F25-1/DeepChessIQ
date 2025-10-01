@@ -89,6 +89,17 @@ function RegisterPage() {
           </button>
         </form>
 
+        <div className="auth-divider">
+          <span />
+          <p>or</p>
+          <span />
+        </div>
+
+        <button className="btn-ghost auth-google" type="button">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+          Continue with Google
+        </button>
+
         <p className="auth-footer">
           Already have an account? <Link to="/signin">Sign in</Link>
         </p>

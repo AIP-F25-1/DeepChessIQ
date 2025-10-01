@@ -1,0 +1,27 @@
+.home-main {
+  display: grid;
+  gap: 32px;
+  padding: 24px;
+}
+
+.home-hero {
+  text-align: center;
+}
+
+.home-title {
+  font-size: 40px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.home-subtitle {
+  color: #666;
+  margin-top: 8px;
+}
+
+.home-board {
+  display: flex;
+  justify-content: center;
+}
+
+
