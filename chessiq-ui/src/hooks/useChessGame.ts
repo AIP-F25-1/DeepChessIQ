@@ -7,6 +7,11 @@ export type BoardPiece = {
   color: Color
 }
 
+export type EliminatedPiece = {
+  type: 'p' | 'n' | 'b' | 'r' | 'q' | 'k'
+  color: Color
+}
+
 export function useChessGame() {
   const engineRef = useRef(new Chess())
   const [fen, setFen] = useState(engineRef.current.fen())
@@ -14,6 +19,8 @@ export function useChessGame() {
   const [selected, setSelected] = useState<SquareName | null>(null)
   const [gameStartAt, setGameStartAt] = useState<number>(() => Date.now())
   const [lastMoveAt, setLastMoveAt] = useState<number | null>(null)
+  const [eliminatedPieces, setEliminatedPieces] = useState<EliminatedPiece[]>([])
+  const [moveHistory, setMoveHistory] = useState<string[]>([])
 
   const pieces: BoardPiece[] = useMemo(() => {
     //const board = engineRef.current.board()
@@ -42,6 +49,17 @@ export function useChessGame() {
   const tryMove = useCallback((from: SquareName, to: SquareName) => {
     const res = engineRef.current.move({ from, to, promotion: 'q' as const })
     if (res) {
+      // Track eliminated piece if there was a capture
+      if (res.captured) {
+        setEliminatedPieces(prev => [...prev, { 
+          type: res.captured as 'p' | 'n' | 'b' | 'r' | 'q' | 'k', 
+          color: res.color === 'w' ? 'b' : 'w' // captured piece is opposite color
+        }])
+      }
+      
+      // Add move to history
+      setMoveHistory(prev => [...prev, res.san])
+      
       setFen(engineRef.current.fen())
       setLastMove({ from: res.from as SquareName, to: res.to as SquareName })
       setSelected(null)
@@ -56,6 +74,8 @@ export function useChessGame() {
     setFen(engineRef.current.fen())
     setSelected(null)
     setLastMove(null)
+    setEliminatedPieces([])
+    setMoveHistory([])
     const now = Date.now()
     setGameStartAt(now)
     setLastMoveAt(null)
@@ -72,6 +92,8 @@ export function useChessGame() {
     lastMove,
     gameStartAt,
     lastMoveAt,
+    eliminatedPieces,
+    moveHistory,
     turn: engineRef.current.turn() as Color,
     inCheck: engineRef.current.inCheck?.() ?? engineRef.current.isCheck?.(),
     gameOver: engineRef.current.isGameOver?.() ?? engineRef.current.isGameOver(),

@@ -1,6 +1,7 @@
 import './chessboard.css'
 import { useEffect, useState } from 'react'
 import { useChessGame } from '../hooks/useChessGame'
+import EliminatedPieces from './EliminatedPieces'
 
 type Square = {
   file: number
@@ -21,7 +22,7 @@ function buildBoard(): Square[] {
 
 function ChessBoard() {
   const squares = buildBoard()
-  const { pieces, selected, setSelected, legalMovesFrom, tryMove, turn, lastMove, gameStartAt, lastMoveAt } = useChessGame()
+  const { pieces, selected, setSelected, legalMovesFrom, tryMove, turn, lastMove, gameStartAt, lastMoveAt, eliminatedPieces } = useChessGame()
   const [nowTs, setNowTs] = useState<number>(() => Date.now())
   useEffect(() => {
     const id = setInterval(() => setNowTs(Date.now()), 1000)
@@ -79,14 +80,28 @@ function ChessBoard() {
 
   return (
     <div className="chessboard-wrapper">
-      <div className="timers-bar" aria-label="Game timers">
-        <div className="timer-card">
-          <span className="timer-label">Total</span>
-          <span className="timer-value">{formatDuration(nowTs - gameStartAt)}</span>
+      <div className="left-sidebar">
+        <div className="timers-bar" aria-label="Game timers">
+          <div className="timer-card">
+            <span className="timer-label">Total</span>
+            <span className="timer-value">{formatDuration(nowTs - gameStartAt)}</span>
+          </div>
+          <div className="timer-card">
+            <span className="timer-label">Since last move</span>
+            <span className="timer-value">{formatDuration(lastMoveAt ? nowTs - lastMoveAt : nowTs - gameStartAt)}</span>
+          </div>
         </div>
-        <div className="timer-card">
-          <span className="timer-label">Since last move</span>
-          <span className="timer-value">{formatDuration(lastMoveAt ? nowTs - lastMoveAt : nowTs - gameStartAt)}</span>
+        <div className="eliminated-pieces-section">
+          <EliminatedPieces 
+            pieces={eliminatedPieces}
+            playerColor="w"
+            playerName="White Player"
+          />
+          <EliminatedPieces 
+            pieces={eliminatedPieces}
+            playerColor="b"
+            playerName="Black Player"
+          />
         </div>
       </div>
       <div className="board-stack">

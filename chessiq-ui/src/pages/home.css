@@ -1,7 +1,32 @@
 .home-main {
-  display: grid;
-  gap: 32px;
-  padding: 24px;
+  padding: 16px;
+  max-width: 100vw;
+  margin: 0 auto;
+  overflow-x: hidden;
+}
+
+.home-game-layout {
+  display: flex;
+  gap: 20px;
+  align-items: start;
+  justify-content: center;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.home-board {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  min-width: 0; /* Allow flex item to shrink */
+}
+
+.home-right-sidebar {
+  width: 320px;
+  min-width: 280px;
+  max-width: 320px;
+  flex-shrink: 0;
 }
 
 .home-hero {
@@ -19,9 +44,50 @@
   margin-top: 8px;
 }
 
-.home-board {
-  display: flex;
-  justify-content: center;
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .home-right-sidebar {
+    width: 280px;
+    min-width: 260px;
+    max-width: 280px;
+  }
+  
+  .home-game-layout {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-main {
+    padding: 12px;
+  }
+  
+  .home-game-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .home-board {
+    order: 1;
+    width: 100%;
+  }
+  
+  .home-right-sidebar {
+    order: 2;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-main {
+    padding: 8px;
+  }
+  
+  .home-game-layout {
+    gap: 12px;
+  }
 }
 
 

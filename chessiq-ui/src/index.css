@@ -20,6 +20,14 @@
 a { font-weight: 500; color: inherit; text-decoration: none; }
 a:hover { color: #ffffff; }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;
