@@ -9,10 +9,24 @@ type Props = {
 }
 
 function FeatureCard({ icon, title, description, accent, onClick }: Props) {
-  const className = accent ? 'feature-card feature-card-accent' : 'feature-card'
+  const classes = [
+    'feature-card',
+    accent ? 'feature-card-accent' : null,
+    onClick ? 'feature-card-actionable' : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) return
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onClick()
+    }
+  }
 
   return (
-    <div className={className} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => { if (onClick && (e.key === 'Enter' || e.key === ' ')) onClick() }}>
+    <div className={classes} onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={handleKeyDown}>
       <div className="feature-icon" aria-hidden>
         {icon}
       </div>

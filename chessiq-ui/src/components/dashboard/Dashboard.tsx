@@ -6,8 +6,9 @@ import { useNavigate } from 'react-router-dom'
 
 function Dashboard() {
   const { user } = useAuth()
-  const isAdmin = !!user && /admin/i.test(user.email)
   const navigate = useNavigate()
+  const isCoach = Boolean(user?.isCoach)
+  const isAdmin = !!user && /admin/i.test(user.email)
   return (
     <div className="dashboard">
       <Navbar />
@@ -34,12 +35,13 @@ function Dashboard() {
               onClick={() => navigate('/')}
             />
             <FeatureCard icon="▦" title="Analysis" description="Analyze games with human insights" />
-            {isAdmin && (
+            {isCoach && (
               <FeatureCard
                 icon="🎓"
-                title="Coach"
-                description="Access coaching tools and manage training content"
+                title="Coach tools"
+                description="Manage students, review progress, and assign plans"
                 accent
+                onClick={() => navigate('/coach')}
               />
             )}
           </section>

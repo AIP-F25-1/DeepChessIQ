@@ -17,18 +17,6 @@ function SignInPage() {
     const status = await signIn(form)
     setIsLoading(false)
     if (status === 'ok') {
-      const sessionRaw = localStorage.getItem('chessiq-session')
-      if (sessionRaw) {
-        try {
-          const session = JSON.parse(sessionRaw) as { isCoach?: boolean }
-          if (session?.isCoach) {
-            navigate('/coach')
-            return
-          }
-        } catch (parseError) {
-          console.error('Failed to parse session after sign in', parseError)
-        }
-      }
       navigate('/dashboard')
     } else {
       setError('Invalid credentials. Please try again.')

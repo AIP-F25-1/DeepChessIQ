@@ -22,8 +22,12 @@ function Navbar() {
             Coach Dashboard
           </NavLink>
         )}
-        <NavLink to="/signin">Sign in</NavLink>
-        <NavLink to="/register">Register</NavLink>
+        {!user && (
+          <>
+            <NavLink to="/signin">Sign in</NavLink>
+            <NavLink to="/register">Register</NavLink>
+          </>
+        )}
       </nav>
       <div className="nav-auth">
         {user ? (
