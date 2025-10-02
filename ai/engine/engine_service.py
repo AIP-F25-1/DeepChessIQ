@@ -9,6 +9,26 @@ from dotenv import dotenv_values
 from stockfish import Stockfish
 
 # Optional: use python-chess for robust FEN validation (works across wrapper versions)
+# FEN means Forsyth-Edwards Notation, a standard notation for describing chess positions.
+# Chess Board FEN-like Representation Rules:
+# ------------------------------------------
+# Pieces:
+#   - P (Pawn), N (Knight), B (Bishop), R (Rook), Q (Queen), K (King)
+#   - Uppercase = White pieces, lowercase = Black pieces
+#
+# Empty Squares:
+#   - Consecutive empty squares are represented by a number
+#   - Example: "1" = one empty square, "2" = two empty squares, etc.
+#
+# Ranks:
+#   - Each rank (row) is separated by a forward slash "/"
+#
+# Board Orientation:
+#   - Board is described from White’s perspective
+#   - Starts from top-left (a8) to top-right (h8)
+#   - Then proceeds rank by rank down to the bottom (a1 → h1)
+
+# If python-chess is not available, we'll fall back to Stockfish's own validation if possible.
 try:
     import chess
 
@@ -16,6 +36,7 @@ try:
 except Exception:
     HAVE_CHESS = False
 
+# Configuration and initialization of the Stockfish engine.
 # --- config ---
 cfg = {**dotenv_values(".env"), **os.environ}
 ENGINE_PATH = cfg.get("ENGINE_PATH") or "ai/tools/stockfish/stockfish.exe"
@@ -24,15 +45,17 @@ HASH_MB = int(cfg.get("ENGINE_HASH_MB", 256))
 
 app = FastAPI(title="DeepChessIQ Engine Service")
 
-sf = None
+sf = None  # sf will hold the Stockfish process.
 init_error: str | None = None
-sf_lock = threading.Lock()
+sf_lock = (
+    threading.Lock()
+)  # sf_lock makes access thread-safe (FastAPI can handle multiple requests at once).
 
 
 def _init_engine():
     global sf, init_error
     try:
-        if not Path(ENGINE_PATH).exists():
+        if not Path(ENGINE_PATH).exists():  #
             init_error = f"ENGINE_PATH not found: {ENGINE_PATH}"
             sf = None
             return
@@ -57,11 +80,13 @@ class BestMoveReq(BaseModel):
     movetime: int | None = 200  # ms
 
 
+# Routes for the FastAPI application.
 @app.get("/ping")
 def ping():
-    return {"ok": True}
+    return {"ok": True}  # Simple liveness probe.
 
 
+# Info about the engine and its status: shows what engine path & settings the service is using and whether init succeeded.
 @app.get("/info")
 def info():
     return {
@@ -73,6 +98,8 @@ def info():
     }
 
 
+# Health probe: tries a quick move from the starting position to verify the engine is responsive.
+# If we get a UCI move back, we’re good.
 @app.get("/health")
 def health():
     """
@@ -119,6 +146,7 @@ def _get_move_and_info(fen: str, movetime: int | None):
     return move, evaluation, top_moves
 
 
+# Endpoint to get the best move from a given FEN position within an optional movetime.
 @app.post("/bestmove")
 def bestmove(req: BestMoveReq):
     if sf is None:
