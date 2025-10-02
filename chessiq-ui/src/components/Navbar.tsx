@@ -14,9 +14,6 @@ function Navbar() {
         </Link>
       </div>
       <nav className="nav-links">
-        <NavLink to="/" end>
-          Home
-        </NavLink>
         <NavLink to="/dashboard">
           Dashboard
         </NavLink>

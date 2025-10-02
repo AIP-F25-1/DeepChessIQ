@@ -5,13 +5,14 @@ type Props = {
   title: string
   description: string
   accent?: boolean
+  onClick?: () => void
 }
 
-function FeatureCard({ icon, title, description, accent }: Props) {
+function FeatureCard({ icon, title, description, accent, onClick }: Props) {
   const className = accent ? 'feature-card feature-card-accent' : 'feature-card'
 
   return (
-    <div className={className}>
+    <div className={className} onClick={onClick} role="button" tabIndex={0} onKeyDown={(e) => { if (onClick && (e.key === 'Enter' || e.key === ' ')) onClick() }}>
       <div className="feature-icon" aria-hidden>
         {icon}
       </div>

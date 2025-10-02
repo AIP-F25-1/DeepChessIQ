@@ -1,8 +1,13 @@
 import Navbar from './Navbar'
 import FeatureCard from './FeatureCard'
 import './dashboard.css'
+import { useAuth } from '../AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 function Dashboard() {
+  const { user } = useAuth()
+  const isAdmin = !!user && /admin/i.test(user.email)
+  const navigate = useNavigate()
   return (
     <div className="dashboard">
       <Navbar />
@@ -26,21 +31,17 @@ function Dashboard() {
               icon="♞"
               title="Play ChessIQ"
               description="Play chess against the human-like ChessIQ engine"
+              onClick={() => navigate('/')}
             />
             <FeatureCard icon="▦" title="Analysis" description="Analyze games with human insights" />
-            <FeatureCard icon="✸" title="Puzzles" description="Improve with training puzzles" />
-            <FeatureCard
-              icon="⚡"
-              title="Hand & Brain"
-              description="Play a collaborative variant with ChessIQ"
-              accent
-            />
-            <FeatureCard icon="★" title="Openings" description="Learn and practice openings" />
-            <FeatureCard
-              icon="☯"
-              title="Bot-or-Not"
-              description="Distinguish between human and AI play"
-            />
+            {isAdmin && (
+              <FeatureCard
+                icon="🎓"
+                title="Coach"
+                description="Access coaching tools and manage training content"
+                accent
+              />
+            )}
           </section>
         </div>
       </main>
