@@ -7,14 +7,15 @@ from DeepChessIQ.dataset.Data.ETL.db_connection import get_connection
 from DeepChessIQ.dataset.Data.ETL.db_insert import insert_game
 from DeepChessIQ.dataset.Data.ETL.pgn_sampler import sample_games_by_elo_bin_streaming
 
-PGN_FILE = Path(r"C:\Users\ppava\Desktop\Projects\AIP\DeepChessIQ\Data\lichess_db_standard_rated_2025-08.pgn")
+PGN_FILE = Path(r"C:\Users\ppava\Desktop\Projects\AIP\test\lichess_db_standard_rated_2025-08.pgn\lichess_db_standard_rated_2025-08.pgn")
 SITE = "lichess"
 ELO_BINS = list(range(1500, 3100, 100))
 GAMES_PER_BIN = 10000
 SEED = 42
 
 CHECKPOINT = Path("sampler_checkpoint.json")
-
+BATCH_SIZE = 1000   # commit every 1000 inserts
+LOG_INTERVAL = 500
 
 def load_checkpoint() -> dict[int, int]:
     if CHECKPOINT.exists():
@@ -25,11 +26,9 @@ def load_checkpoint() -> dict[int, int]:
             pass
     return {b: 0 for b in ELO_BINS}
 
-
 def save_checkpoint(emitted_per_bin: dict[int, int], totals: dict[str, int]):
     payload = {"emitted_per_bin": {str(k): int(v) for k, v in emitted_per_bin.items()}, "totals": totals}
     CHECKPOINT.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-
 
 def main():
     print(f"Streaming PGN from: {PGN_FILE}")
@@ -41,13 +40,11 @@ def main():
         print("All bins already complete per checkpoint. Nothing to do.")
         return
 
-    inserted = 0
-    duplicates = 0
-    failed = 0
-    processed = 0
+    inserted = duplicates = failed = processed = skipped = 0
 
     with get_connection() as conn:
-        for core_row, text_row, b in sample_games_by_elo_bin_streaming(
+        cursor = conn.cursor()
+        for item in sample_games_by_elo_bin_streaming(
             pgn_path=PGN_FILE,
             elo_bins=ELO_BINS,
             games_per_bin=GAMES_PER_BIN,
@@ -61,6 +58,18 @@ def main():
             max_games_per_player_per_bin=2,
             chunk_size_per_bin=400,
         ):
+            if item is None:
+                skipped += 1
+                continue
+
+            try:
+                core_row, text_row, b = item
+            except Exception as e:
+                failed += 1
+                if failed <= 5:
+                    print(f"Bad item structure: {e}")
+                continue
+
             if emitted_per_bin.get(b, 0) >= GAMES_PER_BIN:
                 continue
 
@@ -77,21 +86,28 @@ def main():
                 if failed <= 5:
                     print(f"Insert failed (bin {b}): {e}")
 
-            if processed % 500 == 0:
-                print(f"Processed {processed} | Inserted: {inserted} | Duplicates: {duplicates} | Failed: {failed}")
-                save_checkpoint(emitted_per_bin, {"inserted": inserted, "duplicates": duplicates, "failed": failed})
+            # batch commit
+            if processed % BATCH_SIZE == 0:
+                conn.commit()
+
+            # progress log
+            if processed % LOG_INTERVAL == 0:
+                print(f"Processed {processed} | Inserted: {inserted} | Duplicates: {duplicates} | Failed: {failed} | Skipped: {skipped}")
+                save_checkpoint(emitted_per_bin, {"inserted": inserted, "duplicates": duplicates, "failed": failed, "skipped": skipped})
 
             if all(emitted_per_bin.get(x, 0) >= GAMES_PER_BIN for x in ELO_BINS):
                 break
 
-    save_checkpoint(emitted_per_bin, {"inserted": inserted, "duplicates": duplicates, "failed": failed})
+        conn.commit()  # final commit
 
-    print("Done")
-    print(f"Inserted:   {inserted}")
-    print(f"Duplicates: {duplicates}")
-    print(f"Failed:     {failed}")
-    print(f"Time:       {time.time() - t0:.2f} seconds")
+    save_checkpoint(emitted_per_bin, {"inserted": inserted, "duplicates": duplicates, "failed": failed, "skipped": skipped})
 
+    print("=== Run Summary ===")
+    print(f"✅ Inserted:   {inserted}")
+    print(f"🔁 Duplicates: {duplicates}")
+    print(f"⛔ Skipped:    {skipped}")
+    print(f"❌ Failed:     {failed}")
+    print(f"⏱️  Time:       {time.time() - t0:.2f} seconds")
 
 if __name__ == "__main__":
     main()
