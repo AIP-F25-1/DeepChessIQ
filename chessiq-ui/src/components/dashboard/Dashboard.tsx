@@ -8,7 +8,6 @@ function Dashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const isCoach = Boolean(user?.isCoach)
-  const isAdmin = !!user && /admin/i.test(user.email)
   return (
     <div className="dashboard">
       <Navbar />

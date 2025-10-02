@@ -310,6 +310,38 @@
   line-height: 1.6;
 }
 
+.coach-invite {
+  gap: 1.2rem;
+}
+
+.coach-invite-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.8rem;
+}
+
+.coach-invite-row:first-of-type {
+  grid-template-columns: 1fr auto;
+}
+
+.coach-invite-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  color: #fff;
+}
+
+.coach-invite-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 720px) {
+  .coach-invite-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1080px) {
   .coach-hero {
     grid-template-columns: 1fr;

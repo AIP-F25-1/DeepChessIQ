@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import Navbar from '../components/navbar/Navbar'
@@ -42,6 +42,58 @@ const demoStudents = [
 function CoachDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteLink, setInviteLink] = useState('')
+  const [copied, setCopied] = useState(false)
+  function scrollToInvite() {
+    const el = document.getElementById('coach-invite')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  function generateInviteLink() {
+    const baseUrl = window.location.origin
+    const token = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)
+    const params = new URLSearchParams()
+    params.set('invite', token)
+    if (inviteEmail.trim()) {
+      params.set('email', inviteEmail.trim())
+    }
+    if (user?.email) {
+      params.set('coach', String(user.email))
+    }
+    const link = `${baseUrl}/register?${params.toString()}`
+    setInviteLink(link)
+    setCopied(false)
+  }
+
+  async function copyInviteLink() {
+    if (!inviteLink) return
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  function emailInviteLink() {
+    const to = inviteEmail || ''
+    const subject = encodeURIComponent('Your ChessIQ registration link')
+    const body = encodeURIComponent(
+      `Hi,
+
+Here is your ChessIQ student registration link:
+${inviteLink || '[Generate link first]'}
+
+This will associate your account with my coaching roster.
+
+— ${user?.username || 'Your coach'}`,
+    )
+    window.location.href = `mailto:${to}?subject=${subject}&body=${body}`
+  }
 
   const metrics = useMemo(() => {
     const totalRating = demoStudents.reduce((sum, student) => sum + student.rating, 0)
@@ -88,6 +140,9 @@ function CoachDashboard() {
               <button type="button" className="btn-ghost" onClick={() => navigate('/dashboard')}>
                 Back to player view
               </button>
+              <button type="button" className="btn-ghost" onClick={scrollToInvite}>
+                Invite students
+              </button>
             </div>
           </div>
           <dl className="coach-hero-metrics">
@@ -104,6 +159,52 @@ function CoachDashboard() {
               <dd>+{metrics.totalProgress} pts</dd>
             </div>
           </dl>
+        </section>
+
+        <section className="coach-section coach-invite" id="coach-invite">
+          <header className="coach-section-head">
+            <div>
+              <span className="coach-section-pill">Onboard</span>
+              <h2>Invite new students</h2>
+            </div>
+          </header>
+          <div className="coach-invite-row">
+            <input
+              type="email"
+              placeholder="Student email (optional)"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="coach-invite-input"
+            />
+            <button type="button" className="btn-primary" onClick={generateInviteLink}>
+              Generate link
+            </button>
+          </div>
+          <div className="coach-invite-row">
+            <input
+              type="text"
+              placeholder="Generated link will appear here"
+              value={inviteLink}
+              readOnly
+              className="coach-invite-input"
+            />
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={copyInviteLink}
+              disabled={!inviteLink}
+            >
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={emailInviteLink}
+              disabled={!inviteLink}
+            >
+              Email
+            </button>
+          </div>
         </section>
 
         <section className="coach-section">

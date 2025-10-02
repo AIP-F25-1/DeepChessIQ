@@ -17,22 +17,14 @@ function FeatureCard({ icon, title, description, accent, onClick }: Props) {
     .filter(Boolean)
     .join(' ')
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!onClick) return
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      onClick()
-    }
-  }
-
   return (
-    <div className={classes} onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={handleKeyDown}>
+    <button type="button" className={classes} onClick={onClick} aria-label={`${title} - ${description}`}>
       <div className="feature-icon" aria-hidden>
         {icon}
       </div>
       <div className="feature-title">{title}</div>
       <div className="feature-desc">{description}</div>
-    </div>
+    </button>
   )
 }
 
