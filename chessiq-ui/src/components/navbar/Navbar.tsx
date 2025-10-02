@@ -17,6 +17,11 @@ function Navbar() {
         <NavLink to="/dashboard">
           Dashboard
         </NavLink>
+        {user?.isCoach && (
+          <NavLink to="/coach">
+            Coach Dashboard
+          </NavLink>
+        )}
         <NavLink to="/signin">Sign in</NavLink>
         <NavLink to="/register">Register</NavLink>
       </nav>

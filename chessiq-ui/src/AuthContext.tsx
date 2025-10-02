@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 type AuthUser = {
   username: string
   email: string
+  isCoach?: boolean
 }
 
 type Credentials = {
@@ -17,12 +18,16 @@ type AuthContextValue = {
   signIn: (form: Credentials) => Promise<'ok' | 'invalid'>
   register: (form: Registration) => Promise<'ok' | 'exists' | 'invalid'>
   signOut: () => void
+  coachEmail: string
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 const STORAGE_KEY = 'chessiq-users'
 const SESSION_KEY = 'chessiq-session'
+const COACH_EMAIL = 'coach@chessiq.com'
+const COACH_PASSWORD = 'Coach123'
+const COACH_USERNAME = 'Coach Master'
 
 function readUsers(): Registration[] {
   try {
@@ -38,10 +43,21 @@ function writeUsers(users: Registration[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(users))
 }
 
+function ensureCoachSeed() {
+  localStorage.setItem('coach-email', COACH_EMAIL)
+  const users = readUsers()
+  const coachExists = users.some((entry) => entry.email === COACH_EMAIL)
+  if (coachExists) return
+
+  const seeded = [...users, { username: COACH_USERNAME, email: COACH_EMAIL, password: COACH_PASSWORD }]
+  writeUsers(seeded)
+}
+
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
+    ensureCoachSeed()
     const raw = localStorage.getItem(SESSION_KEY)
     if (raw) {
       try {
@@ -55,11 +71,16 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async ({ email, password }: Credentials) => {
+    ensureCoachSeed()
     const users = readUsers()
     const match = users.find((entry) => entry.email === email && entry.password === password)
     if (!match) return 'invalid'
 
-    const authUser: AuthUser = { username: match.username, email: match.email }
+    const authUser: AuthUser = {
+      username: match.username,
+      email: match.email,
+      isCoach: match.email === COACH_EMAIL,
+    }
     setUser(authUser)
     localStorage.setItem(SESSION_KEY, JSON.stringify(authUser))
     return 'ok'
@@ -70,6 +91,10 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     const exists = users.some((entry) => entry.email === email)
     if (exists) return 'exists'
 
+    if (email === COACH_EMAIL) {
+      return 'exists'
+    }
+
     // password constraints already validated by form, but keep minimal guard
     if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
       return 'invalid'
@@ -78,7 +103,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     const newUsers = [...users, { username, email, password }]
     writeUsers(newUsers)
 
-    const authUser: AuthUser = { username, email }
+    const authUser: AuthUser = { username, email, isCoach: email === COACH_EMAIL }
     setUser(authUser)
     localStorage.setItem(SESSION_KEY, JSON.stringify(authUser))
     return 'ok'
@@ -95,6 +120,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       signIn,
       register,
       signOut,
+      coachEmail: localStorage.getItem('coach-email') ?? COACH_EMAIL,
     }),
     [user],
   )

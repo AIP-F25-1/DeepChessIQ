@@ -4,6 +4,7 @@ import Dashboard from './components/dashboard/Dashboard'
 import HomePage from './pages/Home'
 import RegisterPage from './pages/Register'
 import SignInPage from './pages/SignIn'
+import CoachDashboard from './pages/CoachDashboard'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/coach" element={<CoachDashboard />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
