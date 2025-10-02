@@ -25,9 +25,12 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 const STORAGE_KEY = 'chessiq-users'
 const SESSION_KEY = 'chessiq-session'
-const COACH_EMAIL = 'coach@chessiq.com'
-const COACH_PASSWORD = 'Coach123'
-const COACH_USERNAME = 'Coach Master'
+// Coach/admin config via env (Vite). Fallbacks keep dev experience working.
+const env = (import.meta as any).env ?? {}
+const COACH_EMAIL = (env.VITE_COACH_EMAIL as string) || 'coach@chessiq.com'
+const COACH_PASSWORD = (env.VITE_COACH_PASSWORD as string) || 'Coach123'
+const COACH_USERNAME = (env.VITE_COACH_USERNAME as string) || 'Coach Master'
+const SEED_COACH = String(env.VITE_SEED_COACH || 'true') === 'true'
 
 function readUsers(): Registration[] {
   try {
@@ -45,6 +48,7 @@ function writeUsers(users: Registration[]) {
 
 function ensureCoachSeed() {
   localStorage.setItem('coach-email', COACH_EMAIL)
+  if (!SEED_COACH) return
   const users = readUsers()
   const coachExists = users.some((entry) => entry.email === COACH_EMAIL)
   if (coachExists) return
