@@ -1,7 +1,7 @@
-import Navbar from './Navbar'
-import FeatureCard from './FeatureCard'
+import Navbar from '../navbar/Navbar'
+import FeatureCard from '../feature-card/FeatureCard'
 import './dashboard.css'
-import { useAuth } from '../AuthContext'
+import { useAuth } from '../../AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 function Dashboard() {

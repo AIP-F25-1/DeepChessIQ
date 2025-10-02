@@ -1,7 +1,6 @@
 import './chessboard.css'
 import { useEffect, useState } from 'react'
-import { useChessGame } from '../hooks/useChessGame'
-import EliminatedPieces from './EliminatedPieces'
+import { useChessGame } from '../../hooks/useChessGame'
 
 type Square = {
   file: number
@@ -92,16 +91,7 @@ function ChessBoard() {
           </div>
         </div>
         <div className="eliminated-pieces-section">
-          <EliminatedPieces 
-            pieces={eliminatedPieces}
-            playerColor="w"
-            playerName="White Player"
-          />
-          <EliminatedPieces 
-            pieces={eliminatedPieces}
-            playerColor="b"
-            playerName="Black Player"
-          />
+          {/* Eliminated pieces section is rendered in Home via dedicated component */}
         </div>
       </div>
       <div className="board-stack">
@@ -147,5 +137,6 @@ function ChessBoard() {
 }
 
 export default ChessBoard
+
 
 

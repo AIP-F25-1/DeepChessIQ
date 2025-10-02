@@ -1,6 +1,6 @@
-import Navbar from '../components/Navbar'
-import ChessBoard from '../components/ChessBoard'
-import Commentary from '../components/Commentary'
+import Navbar from '../components/navbar/Navbar'
+import ChessBoard from '../components/chessboard/ChessBoard'
+import Commentary from '../components/commentary/Commentary'
 import { useChessGame } from '../hooks/useChessGame'
 import './home.css'
 
