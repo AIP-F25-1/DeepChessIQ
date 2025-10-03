@@ -1,4 +1,5 @@
 import './chessboard.css'
+import EliminatedPieces from '../eliminated-pieces/EliminatedPieces'
 import { useEffect, useState } from 'react'
 import { useChessGame } from '../../hooks/useChessGame'
 
@@ -91,7 +92,8 @@ function ChessBoard() {
           </div>
         </div>
         <div className="eliminated-pieces-section">
-          {/* Eliminated pieces section is rendered in Home via dedicated component */}
+          <EliminatedPieces pieces={eliminatedPieces} playerColor="w" playerName="White" />
+          <EliminatedPieces pieces={eliminatedPieces} playerColor="b" playerName="Black" />
         </div>
       </div>
       <div className="board-stack">

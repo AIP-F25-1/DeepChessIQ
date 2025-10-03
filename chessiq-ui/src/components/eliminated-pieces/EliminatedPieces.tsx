@@ -1,5 +1,5 @@
 import './eliminated-pieces.css'
-import { type EliminatedPiece } from '../hooks/useChessGame'
+import { type EliminatedPiece } from '../../hooks/useChessGame'
 
 type EliminatedPiecesProps = {
   pieces: EliminatedPiece[]
