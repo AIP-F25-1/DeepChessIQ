@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Chess, type Color, type Move, type Square as SquareName } from 'chess.js'
 
 export type BoardPiece = {
@@ -21,6 +21,8 @@ export function useChessGame() {
   const [lastMoveAt, setLastMoveAt] = useState<number | null>(null)
   const [eliminatedPieces, setEliminatedPieces] = useState<EliminatedPiece[]>([])
   const [moveHistory, setMoveHistory] = useState<string[]>([])
+  const [engineSide, setEngineSide] = useState<Color | null>(null)
+  const [isEngineThinking, setIsEngineThinking] = useState<boolean>(false)
 
   const pieces: BoardPiece[] = useMemo(() => {
     //const board = engineRef.current.board()
@@ -69,6 +71,94 @@ export function useChessGame() {
     return false
   }, [])
 
+  // Simple JS engine using chess.js: depth-2 material lookahead
+  const getEngineMove = useCallback(async (): Promise<{ from: SquareName; to: SquareName } | null> => {
+    const pieceValues: Record<string, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 }
+    const evaluate = (ch: Chess) => {
+      const board = ch.board()
+      let score = 0
+      for (const rank of board) {
+        for (const sq of rank) {
+          if (!sq) continue
+          const val = pieceValues[sq.type]
+          score += sq.color === 'w' ? val : -val
+        }
+      }
+      return score
+    }
+
+    const sideToMove = engineRef.current.turn() as Color
+    const root = new Chess(engineRef.current.fen())
+    const moves = root.moves({ verbose: true }) as Move[]
+    if (!moves.length) return null
+
+    let bestScore = sideToMove === 'w' ? -Infinity : Infinity
+    let best: Move | null = null
+    for (const mv of moves) {
+      const ch1 = new Chess(root.fen())
+      ch1.move({ from: mv.from as SquareName, to: mv.to as SquareName, promotion: 'q' })
+      const replies = ch1.moves({ verbose: true }) as Move[]
+      let replyScore: number
+      if (replies.length === 0) {
+        replyScore = evaluate(ch1)
+      } else {
+        // Assume opponent picks best reply
+        let oppBest = sideToMove === 'w' ? Infinity : -Infinity
+        for (const rep of replies) {
+          const ch2 = new Chess(ch1.fen())
+          ch2.move({ from: rep.from as SquareName, to: rep.to as SquareName, promotion: 'q' })
+          const sc = evaluate(ch2)
+          if (sideToMove === 'w') {
+            if (sc < oppBest) oppBest = sc
+          } else {
+            if (sc > oppBest) oppBest = sc
+          }
+        }
+        replyScore = oppBest
+      }
+      if (sideToMove === 'w') {
+        if (replyScore > bestScore) {
+          bestScore = replyScore
+          best = mv
+        }
+      } else {
+        if (replyScore < bestScore) {
+          bestScore = replyScore
+          best = mv
+        }
+      }
+    }
+    const chosen = best || moves[0]
+    return { from: chosen.from as SquareName, to: chosen.to as SquareName }
+  }, [])
+
+  // Trigger engine move when it's engine's turn (guarded to avoid double-queues)
+  const turn: Color = engineRef.current.turn() as Color
+  const isGameOver = engineRef.current.isGameOver?.() ?? engineRef.current.isGameOver()
+  
+  useMemo(() => {}, [fen]) // noop to tie updates to position changes
+
+  useEffect(() => {
+    if (!engineSide) return
+    if (isGameOver) return
+    if (turn !== engineSide) return
+    if (isEngineThinking) return
+
+    let cancelled = false
+    setIsEngineThinking(true)
+    ;(async () => {
+      const move = await getEngineMove()
+      if (!cancelled && move) {
+        tryMove(move.from, move.to)
+      }
+      if (!cancelled) setIsEngineThinking(false)
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [engineSide, turn, isGameOver, isEngineThinking, getEngineMove, tryMove])
+
   const reset = useCallback(() => {
     engineRef.current = new Chess()
     setFen(engineRef.current.fen())
@@ -79,6 +169,7 @@ export function useChessGame() {
     const now = Date.now()
     setGameStartAt(now)
     setLastMoveAt(null)
+    setIsEngineThinking(false)
   }, [])
 
   return {
@@ -97,6 +188,9 @@ export function useChessGame() {
     turn: engineRef.current.turn() as Color,
     inCheck: engineRef.current.inCheck?.() ?? engineRef.current.isCheck?.(),
     gameOver: engineRef.current.isGameOver?.() ?? engineRef.current.isGameOver(),
+    engineSide,
+    setEngineSide,
+    isEngineThinking,
   }
 }
 

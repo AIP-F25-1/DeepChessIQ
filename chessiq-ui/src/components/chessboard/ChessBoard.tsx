@@ -1,7 +1,7 @@
 import './chessboard.css'
 import EliminatedPieces from '../eliminated-pieces/EliminatedPieces'
 import { useEffect, useState } from 'react'
-import { useChessGame } from '../../hooks/useChessGame'
+import type { BoardPiece } from '../../hooks/useChessGame'
 
 type Square = {
   file: number
@@ -20,9 +20,23 @@ function buildBoard(): Square[] {
   return squares
 }
 
-function ChessBoard() {
+type ChessBoardProps = {
+  pieces: BoardPiece[]
+  selected: any
+  setSelected: (sq: any) => void
+  legalMovesFrom: (from: any) => any[]
+  tryMove: (from: any, to: any) => boolean
+  turn: 'w' | 'b'
+  lastMove: { from: any; to: any } | null
+  gameStartAt: number
+  lastMoveAt: number | null
+  eliminatedPieces: { type: 'p' | 'n' | 'b' | 'r' | 'q' | 'k'; color: 'w' | 'b' }[]
+  engineSide: 'w' | 'b' | null
+  isEngineThinking: boolean
+}
+
+function ChessBoard({ pieces, selected, setSelected, legalMovesFrom, tryMove, turn, lastMove, gameStartAt, lastMoveAt, eliminatedPieces, engineSide, isEngineThinking }: ChessBoardProps) {
   const squares = buildBoard()
-  const { pieces, selected, setSelected, legalMovesFrom, tryMove, turn, lastMove, gameStartAt, lastMoveAt, eliminatedPieces } = useChessGame()
   const [nowTs, setNowTs] = useState<number>(() => Date.now())
   useEffect(() => {
     const id = setInterval(() => setNowTs(Date.now()), 1000)
@@ -42,6 +56,9 @@ function ChessBoard() {
 
   const handleSquareClick = (file: number, rank: number) => {
     const name = coordsToName(file, rank) as any
+    // block clicks if it's engine's turn or engine is thinking
+    if (isEngineThinking) return
+    if (engineSide && turn === engineSide) return
     if (selected) {
       if (selected === name) {
         setSelected(null)
@@ -98,6 +115,7 @@ function ChessBoard() {
       </div>
       <div className="board-stack">
         <div className="chessboard-grid" role="grid" aria-label="Chessboard">
+        {isEngineThinking ? <div className="engine-thinking" aria-live="polite">Engine thinking…</div> : null}
         {squares.map((sq) => {
           const name = coordsToName(sq.file, sq.rank)
           const isSelected = selected === (name as any)

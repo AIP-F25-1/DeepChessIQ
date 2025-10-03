@@ -77,6 +77,7 @@
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   max-width: calc(100vw - 320px - 260px - 64px);
+  position: relative;
 }
 
 .square {
@@ -133,6 +134,20 @@
   width: calc(56px * 8);
   color: #666;
   font-size: 12px;
+}
+
+/* Engine overlay should not shift the grid; absolute overlay with gentle backdrop */
+.engine-thinking {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 11, 18, 0.18);
+  color: #f5f7ff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .board-axes .files,
