@@ -1,8 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
+type UserRole = 'user' | 'coach' | 'commentator'
+
 type AuthUser = {
   username: string
   email: string
+  role: UserRole
+  // kept for backward-compat usage in UI
   isCoach?: boolean
 }
 
@@ -11,7 +15,7 @@ type Credentials = {
   password: string
 }
 
-type Registration = Credentials & { username: string }
+type Registration = Credentials & { username: string; role?: UserRole }
 
 type AuthContextValue = {
   user: AuthUser | null
@@ -80,17 +84,20 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     const match = users.find((entry) => entry.email === email && entry.password === password)
     if (!match) return 'invalid'
 
+    const seedRole: UserRole = match.email === COACH_EMAIL ? 'coach' : 'user'
+    const storedRole = (localStorage.getItem(`role:${match.email}`) as UserRole | null) ?? seedRole
     const authUser: AuthUser = {
       username: match.username,
       email: match.email,
-      isCoach: match.email === COACH_EMAIL,
+      role: storedRole,
+      isCoach: storedRole === 'coach',
     }
     setUser(authUser)
     localStorage.setItem(SESSION_KEY, JSON.stringify(authUser))
     return 'ok'
   }
 
-  const register = async ({ username, email, password }: Registration) => {
+  const register = async ({ username, email, password, role = 'user' }: Registration) => {
     const users = readUsers()
     const exists = users.some((entry) => entry.email === email)
     if (exists) return 'exists'
@@ -107,7 +114,11 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     const newUsers = [...users, { username, email, password }]
     writeUsers(newUsers)
 
-    const authUser: AuthUser = { username, email, isCoach: email === COACH_EMAIL }
+    // persist chosen role separately (so legacy array isn't broken)
+    localStorage.setItem(`role:${email}`, role)
+
+    const effectiveRole: UserRole = role || (email === COACH_EMAIL ? 'coach' : 'user')
+    const authUser: AuthUser = { username, email, role: effectiveRole, isCoach: effectiveRole === 'coach' }
     setUser(authUser)
     localStorage.setItem(SESSION_KEY, JSON.stringify(authUser))
     return 'ok'

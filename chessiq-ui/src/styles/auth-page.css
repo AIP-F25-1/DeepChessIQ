@@ -44,7 +44,27 @@
   color: inherit;
   font-size: 1rem;
 }
+.auth-field select {
+  background: rgba(8,9,14,0.9);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  color: inherit;
+  font-size: 1rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #cfd2e6 50%), linear-gradient(135deg, #cfd2e6 50%, transparent 50%);
+  background-position: calc(100% - 22px) calc(50% + 2px), calc(100% - 14px) calc(50% + 2px);
+  background-size: 8px 8px, 8px 8px;
+  background-repeat: no-repeat;
+}
 .auth-field input:focus {
+  outline: none;
+  border-color: rgba(93,133,255,0.7);
+  box-shadow: 0 0 0 3px rgba(93,133,255,0.15);
+}
+.auth-field select:focus {
   outline: none;
   border-color: rgba(93,133,255,0.7);
   box-shadow: 0 0 0 3px rgba(93,133,255,0.15);

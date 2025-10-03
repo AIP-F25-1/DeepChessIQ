@@ -6,7 +6,7 @@ import '../styles/auth-page.css'
 function RegisterPage() {
   const navigate = useNavigate()
   const { register } = useAuth()
-  const [form, setForm] = useState({ username: '', email: '', password: '' })
+  const [form, setForm] = useState({ username: '', email: '', password: '', role: 'user' as 'user' | 'coach' | 'commentator' })
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -80,6 +80,18 @@ function RegisterPage() {
               required
             />
             <small className="auth-hint">Min 6 characters, with upper, lower, and a digit.</small>
+          </label>
+
+          <label className="auth-field">
+            <span>Role</span>
+            <select
+              value={form.role}
+              onChange={(event) => setForm((prev) => ({ ...prev, role: event.target.value as 'user' | 'coach' | 'commentator' }))}
+            >
+              <option value="user">User</option>
+              <option value="coach">Coach</option>
+              <option value="commentator">Commentator</option>
+            </select>
           </label>
 
           {error && <div className="auth-error">{error}</div>}
