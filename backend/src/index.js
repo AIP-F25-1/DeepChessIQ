@@ -1,13 +1,29 @@
 const express = require('express');
+const { getPool } = require('./db');
 require('dotenv').config();
 
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-// test route
-app.get('/', (req, res) => {
-  res.send('Hello, Node.js API is running 🚀');
+// Simple route that uses the pool
+app.get('/test', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().query('SELECT TOP 5 name FROM sys.databases');
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('DB query failed:', err);
+    res.status(500).send('DB query failed');
+  }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+// Start server **after** DB is reachable
+(async () => {
+  try {
+    await getPool(); // wait for DB
+    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+  } catch (e) {
+    console.error('Startup aborted: cannot reach DB.');
+    process.exit(1);
+  }
+})();
