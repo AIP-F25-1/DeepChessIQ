@@ -1,29 +1,32 @@
+// src/index.js
 const express = require('express');
-const { getPool } = require('./db');
-require('dotenv').config();
+const { run } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Simple route that uses the pool
-app.get('/test', async (req, res) => {
+app.get('/test', async (_req, res) => {
   try {
-    const pool = await getPool();
-    const result = await pool.request().query('SELECT TOP 5 name FROM sys.databases');
-    res.json(result.recordset);
-  } catch (err) {
-    console.error('DB query failed:', err);
+    const { recordset } = await run('SELECT TOP (5) name FROM sys.databases');
+    res.json(recordset);
+  } catch (e) {
+    console.error(e);
     res.status(500).send('DB query failed');
   }
 });
 
-// Start server **after** DB is reachable
-(async () => {
+// Example with parameters
+app.get('/users/:id', async (req, res) => {
   try {
-    await getPool(); // wait for DB
-    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+    const { recordset } = await run(
+      'SELECT * FROM Users WHERE Id = @id',
+      { id: req.params.id }
+    );
+    res.json(recordset);
   } catch (e) {
-    console.error('Startup aborted: cannot reach DB.');
-    process.exit(1);
+    console.error(e);
+    res.status(500).send('DB query failed');
   }
-})();
+});
+
+app.listen(PORT, () => console.log(`🚀 http://localhost:${PORT}`));
