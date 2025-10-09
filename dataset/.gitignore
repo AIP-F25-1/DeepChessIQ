@@ -3,6 +3,20 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# data dumps
+*.pgn
+*.pgn.zst
+*.pgn.gz
+
+# ETL checkpoints & logs
+dataset/Data/ETL/.checkpoints/
+*.checkpoint.json
+*.log
+
+# local env
+.env
+.env.*
+
 
 # C extensions
 *.so

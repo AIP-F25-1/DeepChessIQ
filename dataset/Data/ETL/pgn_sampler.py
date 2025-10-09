@@ -1,212 +1,139 @@
-import random
-import re
-from collections import Counter
+# dataset/Data/ETL/pgn_sampler.py
+from __future__ import annotations
+
+import io
 from pathlib import Path
-from typing import Iterator, Literal, Optional
+from typing import Dict, Generator, Iterable, Optional, Tuple
 
 import chess.pgn
 
-from .row_builder import build_game_rows
+# Local imports (package-relative)
+try:
+    # If run as module: python -m DeepChessIQ.dataset.Data.ETL.pgn_sampler
+    from DeepChessIQ.dataset.Data.ETL.row_builder import build_game_rows
+except Exception:
+    # If imported relatively within the package
+    from .row_builder import build_game_rows
 
 
-def get_elo_bin(white_elo: int, black_elo: int) -> Optional[int]:
-    try:
-        avg = (int(white_elo) + int(black_elo)) // 2
-        return (avg // 100) * 100
-    except Exception:
-        return None
-
+# -------------------------
+# Helpers
+# -------------------------
 
 def is_bot(name: Optional[str]) -> bool:
+    """
+    Heuristic to filter out obvious bots in usernames.
+    Adjust to your dataset as needed.
+    """
     if not name:
         return False
-    return name.endswith("BOT") or name.endswith("_bot") or "bot" in name.lower()
+    s = name.strip().lower()
+    return "bot" in s or s.endswith("_bot") or s.startswith("bot_")
 
 
-def parse_year(utc_date: str) -> Optional[int]:
-    if not utc_date or "????" in utc_date:
-        return None
-    m = re.match(r"(\d{4})\.", utc_date)
-    return int(m.group(1)) if m else None
-
-
-def estimate_time_category(timecontrol: Optional[str]) -> Optional[str]:
-    if not timecontrol or timecontrol == "-":
-        return None
-    base, inc = 0, 0
-    if "+" in timecontrol:
-        p = timecontrol.split("+", 1)
+def elo_bin_100_from_headers(headers: Dict[str, str]) -> Optional[int]:
+    """Compute 100-Elo bin using avg(white, black) from raw headers."""
+    def to_int(x):
         try:
-            base = int(p[0])
-            inc = int(p[1])
+            return int(x)
         except Exception:
             return None
+
+    w = to_int(headers.get("WhiteElo"))
+    b = to_int(headers.get("BlackElo"))
+    if w is None and b is None:
+        return None
+    if w is None:
+        avg = b
+    elif b is None:
+        avg = w
     else:
-        try:
-            base = int(timecontrol)
-        except Exception:
-            return None
-    total = base + 40 * inc
-    if total <= 120:
-        return "bullet"
-    if total <= 480:
-        return "blitz"
-    if total <= 1500:
-        return "rapid"
-    return "classical"
+        avg = (w + b) // 2
+    return (avg // 100) * 100 if avg is not None else None
 
 
 def game_ply_count(game: chess.pgn.Game) -> int:
-    try:
-        return game.end().ply()
-    except Exception:
-        return 0
+    """Fast ply counter from mainline (no branches)."""
+    count = 0
+    node = game
+    while node.variations:
+        node = node.variation(0)
+        count += 1
+    return count
 
+
+# -------------------------
+# Main generator
+# -------------------------
 
 def sample_games_by_elo_bin_streaming(
-    pgn_path: Path,
-    elo_bins: list[int],
-    games_per_bin: int,
-    site: Literal["lichess", "chesscom"] = "lichess",
-    seed: int = 42,
+    pgn_path: str | Path,
     *,
-    allowed_timecats: Optional[set[str]] = None,
-    allowed_variants: Optional[set[str]] = None,
-    rated_only: bool = True,
-    min_year: Optional[int] = None,
-    min_plies: int = 6,
-    exclude_bots: bool = True,
-    max_games_per_player_per_bin: int = 3,
-    chunk_size_per_bin: int = 400,
-) -> Iterator[tuple[dict, dict, int]]:
+    site: str = "lichess",
+    skip_bots: bool = True,
+) -> Generator[Tuple[dict, dict, Optional[int]], None, None]:
     """
-    Stream PGN file sequentially, keep small per-bin buffers,
-    and yield selected games incrementally.
+    Sequentially stream games from a PGN and emit tuples:
+        (core_row, text_row, elo_bin_100)
 
-    Yields: (core_row, text_row, elo_bin)
+    - No randomization.
+    - Guards against malformed games: skips if row_builder returns None.
+    - Persists ply_count via build_game_rows(..., ply_count=...).
     """
+    pgn_file = Path(pgn_path)
+    if not pgn_file.exists():
+        raise FileNotFoundError(f"PGN not found: {pgn_file}")
 
-    rng = random.Random(seed)
-
-    emitted_per_bin: dict[int, int] = {b: 0 for b in elo_bins}
-    buffers: dict[int, list[tuple[dict, dict, str, str]]] = {b: [] for b in elo_bins}
-    per_player_cap: dict[int, Counter[str]] = {b: Counter() for b in elo_bins}
-
-    def bin_full(b: int) -> bool:
-        return emitted_per_bin[b] >= games_per_bin
-
-    def need_any() -> bool:
-        return any(emitted_per_bin[b] < games_per_bin for b in elo_bins)
-
-    def can_add_player(b: int, white: Optional[str], black: Optional[str]) -> bool:
-        for p in (white, black):
-            if not p:
-                continue
-            if per_player_cap[b][p] >= max_games_per_player_per_bin:
-                return False
-        return True
-
-    def record_players(b: int, white: Optional[str], black: Optional[str], delta: int):
-        for p in (white, black):
-            if not p:
-                continue
-            per_player_cap[b][p] += delta
-            if per_player_cap[b][p] <= 0:
-                del per_player_cap[b][p]
-
-    def flush_bin(b: int):
-        remaining = max(0, games_per_bin - emitted_per_bin[b])
-        if remaining == 0 or not buffers[b]:
-            buffers[b].clear()
-            return
-
-        take = min(remaining, len(buffers[b]))
-        if take < len(buffers[b]):
-            chosen_idx = set(rng.sample(range(len(buffers[b])), take))
-        else:
-            chosen_idx = set(range(len(buffers[b])))
-
-        new_buf = []
-        for i, (core_row, text_row, w, k) in enumerate(buffers[b]):
-            if i in chosen_idx:
-                record_players(b, w, k, +1)
-                emitted_per_bin[b] += 1
-                yield (core_row, text_row, b)
-            else:
-                new_buf.append((core_row, text_row, w, k))
-
-        buffers[b] = new_buf
-
-    with pgn_path.open("r", encoding="utf-8") as f:
-        scanned = 0
-        while need_any():
-            game = chess.pgn.read_game(f)
+    with pgn_file.open("r", encoding="utf-8", errors="replace", newline="") as fp:
+        while True:
+            game = chess.pgn.read_game(fp)
             if game is None:
-                break
-
-            scanned += 1
-            if scanned % 10000 == 0:
-                print(f"Scanned {scanned:,} games...")
+                return  # EOF
 
             headers = dict(game.headers)
-            white = headers.get("White")
-            black = headers.get("Black")
 
-            res = headers.get("Result")
-            if res not in ("1-0", "0-1", "1/2-1/2"):
-                continue
-            if exclude_bots and (is_bot(white) or is_bot(black)):
+            # Optional bot filter
+            if skip_bots and (is_bot(headers.get("White")) or is_bot(headers.get("Black"))):
                 continue
 
-            variant = headers.get("Variant", "Standard")
-            if allowed_variants and variant not in allowed_variants:
+            # Build SAN string and compute ply_count from mainline moves
+            board = game.board()
+            sans: list[str] = []
+            for mv in game.mainline_moves():
+                sans.append(board.san(mv))
+                board.push(mv)
+            san_str = " ".join(sans)
+            ply_count_val = len(sans)  # or game_ply_count(game)
+
+            # Full PGN text (headers + moves, no comments/vars)
+            exporter = chess.pgn.StringExporter(headers=True, variations=False, comments=False)
+            movetext_full = game.accept(exporter)
+
+            # Build rows (GUARD against None)
+            rows = build_game_rows(headers, san_str, movetext_full, site=site, ply_count=ply_count_val)
+            if not rows:
+                # malformed or missing fields — skip safely
                 continue
 
-            if rated_only:
-                event = (headers.get("Event") or "").lower()
-                if "rated" not in event:
-                    continue
+            core_row, text_row = rows
+            bin100 = elo_bin_100_from_headers(headers)
 
-            if min_year is not None:
-                y = parse_year(headers.get("UTCDate", ""))
-                if y is None or y < min_year:
-                    continue
+            yield core_row, text_row, bin100
 
-            tc_cat = estimate_time_category(headers.get("TimeControl"))
-            if allowed_timecats and (tc_cat not in allowed_timecats):
-                continue
 
-            try:
-                w_elo = int(headers.get("WhiteElo", 0))
-                b_elo = int(headers.get("BlackElo", 0))
-            except Exception:
-                continue
+# -------------------------
+# CLI (optional quick test)
+# -------------------------
 
-            b = get_elo_bin(w_elo, b_elo)
-            if b not in buffers or bin_full(b):
-                continue
+if __name__ == "__main__":
+    import argparse, itertools
 
-            if min_plies and game_ply_count(game) < min_plies:
-                continue
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--pgn", required=True)
+    ap.add_argument("--limit", type=int, default=10)
+    args = ap.parse_args()
 
-            try:
-                san = game.board().variation_san(game.mainline_moves())
-                movetext_full = str(game).split("\n\n", maxsplit=1)[-1].strip()
-            except Exception:
-                continue
-
-            if not can_add_player(b, white, black):
-                continue
-
-            core_row, text_row = build_game_rows(headers, san, movetext_full, site=site)
-
-            buffers[b].append((core_row, text_row, white or "", black or ""))
-
-            if len(buffers[b]) >= chunk_size_per_bin:
-                yield from flush_bin(b)
-
-        for b in elo_bins:
-            if emitted_per_bin[b] < games_per_bin and buffers[b]:
-                yield from flush_bin(b)
-
-    print("Streaming selection finished.")
+    for i, (core, text, b) in enumerate(sample_games_by_elo_bin_streaming(args.pgn), start=1):
+        print(f"[{i}] {core.get('white')} vs {core.get('black')}  bin={b}  ply={core.get('ply_count')}")
+        if i >= args.limit:
+            break

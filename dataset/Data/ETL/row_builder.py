@@ -9,7 +9,8 @@ def parse_datetime(utc_date: str, utc_time: str) -> Optional[datetime]:
     except Exception:
         return None
 
-def build_game_rows(headers: dict, san: str, movetext_full: str, site: str = "lichess") -> Optional[tuple[dict, dict]]:
+# ⬇️ change: accept ply_count as an optional kwarg (default None)
+def build_game_rows(headers: dict, san: str, movetext_full: str, site: str = "lichess", *, ply_count: int | None = None) -> Optional[tuple[dict, dict]]:
     white = headers.get("White")
     black = headers.get("Black")
     result = headers.get("Result")
@@ -49,7 +50,7 @@ def build_game_rows(headers: dict, san: str, movetext_full: str, site: str = "li
         "termination": headers.get("Termination"),
         "variant": headers.get("Variant"),
         "round": headers.get("Round"),
-        "ply_count": None,
+        "ply_count": ply_count,              # ⬅️ set it here (was None before)
         "start_fen": headers.get("FEN"),
         "hash_loose": h_loose,
         "hash_strict": h_strict,

@@ -1,0 +1,17 @@
+{
+  "pgn_path": "E:\\Projects\\AIP\\DeepChessIQ\\dataset\\Data\\lichess_db_standard_rated_2025-08.pgn",
+  "fingerprint": {
+    "size": 118331801600,
+    "mtime": 1759340710
+  },
+  "cookie": 243977539,
+  "processed": 104997,
+  "inserted": 102806,
+  "duplicates": 2190,
+  "failed": 0,
+  "skipped_quota": 0,
+  "inserted_lt1500": 34433,
+  "db_lt1500_start": 11961,
+  "elapsed_sec": 906.62,
+  "saved_at": "2025-10-09T17:48:52.640923Z"
+}
