@@ -17,7 +17,7 @@ function Navbar() {
         <NavLink to="/dashboard">
           Dashboard
         </NavLink>
-        {user?.isCoach && (
+        {user?.role === 'coach' && (
           <NavLink to="/coach">
             Coach Dashboard
           </NavLink>

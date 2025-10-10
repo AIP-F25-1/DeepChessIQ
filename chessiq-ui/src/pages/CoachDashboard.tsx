@@ -90,7 +90,7 @@ ${inviteLink || '[Generate link first]'}
 
 This will associate your account with my coaching roster.
 
-— ${user?.username || 'Your coach'}`,
+— ${user?.email}`,
     )
     window.location.href = `mailto:${to}?subject=${subject}&body=${body}`
   }
@@ -114,12 +114,12 @@ This will associate your account with my coaching roster.
       navigate('/signin', { replace: true })
       return
     }
-    if (!user.isCoach) {
+    if (user.role !== 'coach') {
       navigate('/dashboard', { replace: true })
     }
   }, [navigate, user])
 
-  if (!user?.isCoach) return null
+  if (!user || user.role !== 'coach') return null
 
   return (
     <div className="coach-dashboard">

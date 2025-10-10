@@ -28,7 +28,7 @@ function RegisterPage() {
     setIsLoading(false)
 
     if (status === 'ok') {
-      navigate('/')
+      navigate('/dashboard')
     } else if (status === 'exists') {
       setError('An account with this email already exists. Try signing in instead.')
     } else {
@@ -107,9 +107,9 @@ function RegisterPage() {
           <span />
         </div>
 
-        <button className="btn-ghost auth-google" type="button">
+        <button className="btn-ghost auth-google" type="button" disabled>
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-          Continue with Google
+          Continue with Google (coming soon)
         </button>
 
         <p className="auth-footer">

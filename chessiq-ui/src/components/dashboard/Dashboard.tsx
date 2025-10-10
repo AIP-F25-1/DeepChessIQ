@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 function Dashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const isCoach = Boolean(user?.isCoach)
+  const isCoach = user?.role === 'coach'
   return (
     <div className="dashboard">
       <Navbar />

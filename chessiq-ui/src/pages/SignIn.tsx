@@ -18,8 +18,10 @@ function SignInPage() {
     setIsLoading(false)
     if (status === 'ok') {
       navigate('/dashboard')
-    } else {
+    } else if (status === 'invalid') {
       setError('Invalid credentials. Please try again.')
+    } else {
+      setError('Unable to sign in right now. Please try again later.')
     }
   }
 
@@ -69,9 +71,9 @@ function SignInPage() {
           <span />
         </div>
 
-        <button className="btn-ghost auth-google" type="button">
+        <button className="btn-ghost auth-google" type="button" disabled>
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-          Continue with Google
+          Continue with Google (coming soon)
         </button>
 
         <p className="auth-footer">
