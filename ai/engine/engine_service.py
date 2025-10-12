@@ -71,8 +71,8 @@ _init_engine()
 # --- models ---
 class BestMoveReq(BaseModel):
     fen: str
-    movetime: Optional[int] = None  # ms; time-based mode
-    depth: Optional[int] = None  # plies; fixed-depth mode
+    movetime: Optional[int] = None  # ms (explicit time mode)
+    depth: Optional[int] = None  # plies (explicit depth mode)
 
 
 # --- routes ---
@@ -125,47 +125,57 @@ def _validate_fen(fen: str):
             pass
 
 
-@app.post("/bestmove")
-def bestmove(req: BestMoveReq):
+# --- helper ---
+def _search_bestmove(fen: str, movetime: Optional[int], depth: Optional[int]):
+    """Run Stockfish either in time-mode (movetime ms) or depth-mode (plies)."""
     if sf is None:
         raise HTTPException(
             status_code=503, detail=init_error or "Stockfish not available"
         )
 
-    _validate_fen(req.fen)
+    _validate_fen(fen)
 
-    # Force fixed movetime mode for consistency (200ms per move)
-    req.movetime = 200
-    req.depth = None  # ignore depth if both provided
+    with sf_lock:
+        sf.set_fen_position(fen)
+        t0 = perf_counter()
 
+        # Priority: explicit depth > explicit movetime > defaults from .env (optional)
+        if depth is not None and hasattr(sf, "set_depth"):
+            sf.set_depth(int(depth))
+            uci = sf.get_best_move()
+            mode_used = {"mode": "depth", "depth": int(depth)}
+        elif movetime is not None:
+            uci = sf.get_best_move_time(int(movetime))
+            mode_used = {"mode": "time", "movetime": int(movetime)}
+        else:
+            # Fallback default: behave like quick interactive time-mode if neither provided
+            uci = sf.get_best_move_time(200)
+            mode_used = {"mode": "time", "movetime": 200}
+
+        elapsed_ms = int((perf_counter() - t0) * 1000)
+
+        if uci is None:
+            raise HTTPException(
+                status_code=400, detail="No valid moves available from this position"
+            )
+
+        evaluation = sf.get_evaluation() if hasattr(sf, "get_evaluation") else None
+        pv = sf.get_top_moves(1) if hasattr(sf, "get_top_moves") else []
+
+    # If time-mode, provide an approximate depth estimate (for UI/debug)
+    if mode_used["mode"] == "time":
+        approx_depth = int(12 + (mode_used["movetime"] / 100) * 1.5)
+        mode_used["approx_depth"] = approx_depth
+
+    mode_used["elapsed_ms"] = elapsed_ms
+    return {"uci": uci, "eval": evaluation, "pv": pv, "used": mode_used}
+
+
+# --- endpoint ---
+@app.post("/bestmove")
+def bestmove(req: BestMoveReq):
     try:
-        with sf_lock:
-            sf.set_fen_position(req.fen)
-            t0 = perf_counter()
-
-            # Always use movetime=200 for time-based search
-            move = sf.get_best_move_time(req.movetime)
-            used = {"mode": "time", "movetime": req.movetime}
-
-            elapsed_ms = int((perf_counter() - t0) * 1000)
-
-            if move is None:
-                raise HTTPException(
-                    status_code=400,
-                    detail="No valid moves available from this position",
-                )
-
-            # Optional infos (wrapper-dependent)
-            evaluation = sf.get_evaluation() if hasattr(sf, "get_evaluation") else None
-            top_moves = sf.get_top_moves(1) if hasattr(sf, "get_top_moves") else []
-
-        # Optionally estimate search depth based on movetime (rough heuristic)
-        approx_depth = int(12 + (req.movetime / 100) * 1.5)
-        used["elapsed_ms"] = elapsed_ms
-        used["approx_depth"] = approx_depth
-
-        return {"uci": move, "eval": evaluation, "pv": top_moves, "used": used}
-
+        return _search_bestmove(req.fen, req.movetime, req.depth)
     except HTTPException:
         raise
     except Exception as e:
