@@ -272,3 +272,4 @@ Dockerfile.local
 # Git
 .gitmodules
 .gitconfig
+"backend/src/db/" 
