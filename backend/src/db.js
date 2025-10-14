@@ -1,4 +1,3 @@
-// src/db.js
 const sql = require('mssql');
 require('dotenv').config();
 
@@ -11,13 +10,11 @@ const config = {
   options: { encrypt: process.env.DB_ENCRYPT === 'true', trustServerCertificate: false }
 };
 
-// Call run('SELECT ... WHERE id = @id', { id: 1 })
 async function run(query, params = {}) {
-  const pool = await sql.connect(config);          // uses a global shared pool internally
+  const pool = await sql.connect(config);
   const req = pool.request();
-  for (const [name, value] of Object.entries(params)) req.input(name, value);
-  const result = await req.query(query);
-  return result;
+  for (const [k, v] of Object.entries(params)) req.input(k, v);
+  return req.query(query);
 }
 
 module.exports = { run };
