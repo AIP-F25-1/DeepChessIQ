@@ -1,6 +1,5 @@
-import { type FormEvent, useState, ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import '../styles/auth-page.css'
+import { type FormEvent, useState, type ReactNode } from 'react'
+import '../../styles/auth-page.css'
 
 type AuthFormProps = {
   title: string
@@ -24,7 +23,7 @@ function AuthForm({
   onSubmit,
   validateForm,
   children
-}: AuthFormProps) {
+}: Readonly<AuthFormProps>) {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -85,7 +84,7 @@ function AuthForm({
 
         <button className="btn-ghost auth-google" type="button" disabled>
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-          Continue with Google (coming soon)
+          <span>Continue with Google (coming soon)</span>
         </button>
 
         <p className="auth-footer">

@@ -23,7 +23,7 @@ export function useChessGame() {
   const [moveHistory, setMoveHistory] = useState<string[]>([])
   const [engineSide, setEngineSide] = useState<Color | null>('b')
   const [isEngineThinking, setIsEngineThinking] = useState<boolean>(false)
-  const ENGINE_URL = (import.meta as any).env?.VITE_ENGINE_URL || '/engine/bestmove'
+  const ENGINE_URL = (import.meta as any).env?.VITE_ENGINE_URL || 'http://20.55.88.222:8001/bestmove'
   const ENGINE_TIMEOUT_MS = Number((import.meta as any).env?.VITE_ENGINE_TIMEOUT_MS || 10000)
 
   const pieces: BoardPiece[] = useMemo(() => {
