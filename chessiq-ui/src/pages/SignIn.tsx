@@ -1,86 +1,55 @@
-import { type FormEvent, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
-import '../styles/auth-page.css'
+import AuthForm from '../components/auth/AuthForm'
+import { Link } from 'react-router-dom'
 
 function SignInPage() {
   const navigate = useNavigate()
   const { signIn } = useAuth()
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setError(null)
-    setIsLoading(true)
-    const status = await signIn(form)
-    setIsLoading(false)
+  const handleSubmit = async (form: any) => {
+    const status = await signIn({ email: form.email, password: form.password })
     if (status === 'ok') {
       navigate('/dashboard')
-    } else if (status === 'invalid') {
-      setError('Invalid credentials. Please try again.')
-    } else {
-      setError('Unable to sign in right now. Please try again later.')
     }
+    return status
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-heading">
-          <span className="auth-pill">Welcome back</span>
-          <h1>Sign in to ChessIQ</h1>
-          <p>Continue exploring human-style chess insights.</p>
-        </div>
+    <AuthForm
+      title="Sign in to ChessIQ"
+      subtitle="Continue exploring human-style chess insights."
+      pillText="Welcome back"
+      submitText="Sign In"
+      loadingText="Signing in…"
+      footerText={
+        <>
+          Don't have an account? <Link to="/register">Create one</Link>
+        </>
+      }
+      onSubmit={handleSubmit}
+    >
+      <label className="auth-field">
+        <span>Email</span>
+        <input
+          type="email"
+          name="email"
+          placeholder="you@example.com"
+          required
+        />
+      </label>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label className="auth-field">
-            <span>Email</span>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
-              placeholder="you@example.com"
-              required
-            />
-          </label>
-
-          <label className="auth-field">
-            <span>Password</span>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
-              placeholder="••••••••"
-              minLength={6}
-              required
-            />
-          </label>
-
-          {error && <div className="auth-error">{error}</div>}
-
-          <button type="submit" className="btn-primary auth-submit" disabled={isLoading}>
-            {isLoading ? 'Signing in…' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="auth-divider">
-          <span />
-          <p>or</p>
-          <span />
-        </div>
-
-        <button className="btn-ghost auth-google" type="button" disabled>
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-          Continue with Google (coming soon)
-        </button>
-
-        <p className="auth-footer">
-          Don’t have an account? <Link to="/register">Create one</Link>
-        </p>
-      </div>
-    </div>
+      <label className="auth-field">
+        <span>Password</span>
+        <input
+          type="password"
+          name="password"
+          placeholder="••••••••"
+          minLength={6}
+          required
+        />
+      </label>
+    </AuthForm>
   )
 }
 
