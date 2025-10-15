@@ -9,11 +9,19 @@ type CommentaryProps = {
 }
 
 function Commentary({ moveHistory, currentTurn, inCheck, gameOver }: CommentaryProps) {
+  const movesContainerRef = useRef<HTMLDivElement>(null)
   const movesEndRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom when new moves are added
+  // Auto-scroll the moves panel without affecting page scroll
   useEffect(() => {
-    movesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const container = movesContainerRef.current
+    if (!container) return
+    // Keep user position if they scrolled up; only autoscroll when near bottom
+    const threshold = 60
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold
+    if (isNearBottom) {
+      container.scrollTop = container.scrollHeight
+    }
   }, [moveHistory])
 
   const formatMoveNumber = (index: number) => {
@@ -106,7 +114,7 @@ function Commentary({ moveHistory, currentTurn, inCheck, gameOver }: CommentaryP
           <span className="move-count">{moveHistory.length} moves</span>
         </div>
         
-        <div className="moves-list">
+        <div className="moves-list" ref={movesContainerRef}>
           {moveHistory.length === 0 ? (
             <div className="no-moves">
               <p>Game hasn't started yet</p>
