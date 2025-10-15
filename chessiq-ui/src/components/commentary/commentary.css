@@ -173,8 +173,40 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.commentary-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  background: rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  border-radius: 8px;
+  margin-top: 8px;
+  min-height: 120px;
+}
+
+.commentary-box-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: #a78bfa;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.commentary-box-content {
+  color: #e0e7ff;
+}
+
+.commentary-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #c4b5fd;
+  font-style: italic;
+  letter-spacing: 0.01em;
 }
 
 .analysis-header {

@@ -7,14 +7,18 @@
   justify-content: center;
 }
 
-.right-spacer { width: 100%; height: 1px; opacity: 0; }
+.left-sidebar,
+.board-stack,
+.chessboard-grid {
+  position: static;
+}
+
+.right-spacer {  height: 1px; opacity: 0; }
 
 .left-sidebar {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  position: sticky;
-  top: 12px;
   width: 260px;
   min-width: 240px;
   flex-shrink: 0;
@@ -70,25 +74,26 @@
 
 .chessboard-grid {
   display: grid;
-  grid-template-columns: repeat(8, min(72px, calc((100vw - 320px - 260px - 64px) / 8)));
-  grid-template-rows: repeat(8, min(72px, calc((100vw - 320px - 260px - 64px) / 8)));
+  grid-template-columns: repeat(8, min(70px, calc((100vw - 320px - 260px - 56px) / 8), calc((100vh - 150px) / 8)));
+  grid-template-rows: repeat(8, min(70px, calc((100vw - 320px - 260px - 56px) / 8), calc((100vh - 150px) / 8)));
   border: 2px solid #222;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  max-width: calc(100vw - 320px - 260px - 64px);
+  max-width: calc(100vw - 320px - 260px - 48px);
+  max-height: calc(100vh - 150px);
   position: relative;
 }
 
 .square {
-  width: min(72px, calc((100vw - 320px - 260px - 64px) / 8));
-  height: min(72px, calc((100vw - 320px - 260px - 64px) / 8));
+  width: min(70px, calc((100vw - 320px - 260px - 56px) / 8), calc((100vh - 150px) / 8));
+  height: min(70px, calc((100vw - 320px - 260px - 56px) / 8), calc((100vh - 150px) / 8));
   display: grid;
   place-items: center;
   border: none;
   padding: 0;
   cursor: pointer;
-  font-size: min(32px, calc((100vw - 320px - 260px - 64px) / 16));
+  font-size: min(32px, calc((100vw - 320px - 260px - 48px) / 18));
 }
 
 .square.light { background: #f0d9b5; }

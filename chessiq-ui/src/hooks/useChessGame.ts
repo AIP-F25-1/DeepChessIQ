@@ -21,7 +21,7 @@ export function useChessGame() {
   const [lastMoveAt, setLastMoveAt] = useState<number | null>(null)
   const [eliminatedPieces, setEliminatedPieces] = useState<EliminatedPiece[]>([])
   const [moveHistory, setMoveHistory] = useState<string[]>([])
-  const [engineSide, setEngineSide] = useState<Color | null>(null)
+  const engineSide: Color = 'b'
   const [isEngineThinking, setIsEngineThinking] = useState<boolean>(false)
 
   const pieces: BoardPiece[] = useMemo(() => {
@@ -48,32 +48,36 @@ export function useChessGame() {
     [],
   )
 
-  const tryMove = useCallback((from: SquareName, to: SquareName) => {
-    const res = engineRef.current.move({ from, to, promotion: 'q' as const })
-    if (res) {
-      // Track eliminated piece if there was a capture
-      if (res.captured) {
-        setEliminatedPieces(prev => [...prev, { 
-          type: res.captured as 'p' | 'n' | 'b' | 'r' | 'q' | 'k', 
-          color: res.color === 'w' ? 'b' : 'w' // captured piece is opposite color
-        }])
-      }
-      
-      // Add move to history
-      setMoveHistory(prev => [...prev, res.san])
-      
-      setFen(engineRef.current.fen())
-      setLastMove({ from: res.from as SquareName, to: res.to as SquareName })
-      setSelected(null)
-      setLastMoveAt(Date.now())
-      return true
-    }
-    return false
-  }, [])
+  const tryMove = useCallback(
+    (from: SquareName, to: SquareName) => {
+      const res = engineRef.current.move({ from, to, promotion: 'q' as const })
+      if (res) {
+        if (res.captured) {
+          setEliminatedPieces((prev) => [
+            ...prev,
+            {
+              type: res.captured as 'p' | 'n' | 'b' | 'r' | 'q' | 'k',
+              color: res.color === 'w' ? 'b' : 'w',
+            },
+          ])
+        }
 
-  // Simple JS engine using chess.js: depth-2 material lookahead
+        setMoveHistory((prev) => [...prev, res.san])
+        setFen(engineRef.current.fen())
+        setLastMove({ from: res.from as SquareName, to: res.to as SquareName })
+        setSelected(null)
+        setLastMoveAt(Date.now())
+        return true
+      }
+      return false
+    },
+    [],
+  )
+
+  // Simple chess engine using depth-2 material evaluation
   const getEngineMove = useCallback(async (): Promise<{ from: SquareName; to: SquareName } | null> => {
     const pieceValues: Record<string, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 }
+    
     const evaluate = (ch: Chess) => {
       const board = ch.board()
       let score = 0
@@ -92,6 +96,14 @@ export function useChessGame() {
     const moves = root.moves({ verbose: true }) as Move[]
     if (!moves.length) return null
 
+    // Get PGN representation of current position
+    const currentPgn = engineRef.current.pgn()
+    const currentFen = engineRef.current.fen()
+    
+    console.log('📥 INPUT to Engine:')
+    console.log('  PGN:', currentPgn || '(starting position)')
+    console.log('  FEN:', currentFen)
+
     let bestScore = sideToMove === 'w' ? -Infinity : Infinity
     let best: Move | null = null
     for (const mv of moves) {
@@ -102,7 +114,6 @@ export function useChessGame() {
       if (replies.length === 0) {
         replyScore = evaluate(ch1)
       } else {
-        // Assume opponent picks best reply
         let oppBest = sideToMove === 'w' ? Infinity : -Infinity
         for (const rep of replies) {
           const ch2 = new Chess(ch1.fen())
@@ -129,6 +140,11 @@ export function useChessGame() {
       }
     }
     const chosen = best || moves[0]
+    
+    console.log('📤 OUTPUT from Engine:')
+    console.log('  UCI move:', `${chosen.from}${chosen.to}`)
+    console.log('  PGN notation:', chosen.san)
+    
     return { from: chosen.from as SquareName, to: chosen.to as SquareName }
   }, [])
 
@@ -139,7 +155,6 @@ export function useChessGame() {
   useMemo(() => {}, [fen]) // noop to tie updates to position changes
 
   useEffect(() => {
-    if (!engineSide) return
     if (isGameOver) return
     if (turn !== engineSide) return
     if (isEngineThinking) return
@@ -174,6 +189,7 @@ export function useChessGame() {
 
   return {
     fen,
+    pgn: engineRef.current.pgn(), // Add PGN export
     pieces,
     selected,
     setSelected,
@@ -189,7 +205,6 @@ export function useChessGame() {
     inCheck: engineRef.current.inCheck?.() ?? engineRef.current.isCheck?.(),
     gameOver: engineRef.current.isGameOver?.() ?? engineRef.current.isGameOver(),
     engineSide,
-    setEngineSide,
     isEngineThinking,
   }
 }

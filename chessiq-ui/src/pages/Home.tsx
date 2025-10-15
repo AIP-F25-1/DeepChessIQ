@@ -6,7 +6,7 @@ import './home.css'
 
 function HomePage() {
   const game = useChessGame()
-  const { moveHistory, turn, inCheck, gameOver, engineSide, setEngineSide } = game
+  const { moveHistory, turn, inCheck, gameOver } = game
 
   return (
     <div className="home">
@@ -15,20 +15,7 @@ function HomePage() {
         <div className="home-game-layout">
           <section className="home-board">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-              <div>
-                <label style={{ marginRight: '0.5rem' }}>Engine side:</label>
-                <select
-                  value={engineSide || ''}
-                  onChange={(e) => {
-                    const val = e.target.value as 'w' | 'b' | ''
-                    setEngineSide(val === '' ? null : val)
-                  }}
-                >
-                  <option value="">Off</option>
-                  <option value="w">White</option>
-                  <option value="b">Black</option>
-                </select>
-              </div>
+              {/* <span style={{ fontSize: '0.9rem', color: '#9aa1b5' }}>Opponent: Computer (plays Black)</span> */}
             </div>
             <ChessBoard
               pieces={game.pieces}
