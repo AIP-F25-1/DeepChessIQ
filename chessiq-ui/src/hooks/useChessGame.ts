@@ -21,13 +21,13 @@ export function useChessGame() {
   const [lastMoveAt, setLastMoveAt] = useState<number | null>(null)
   const [eliminatedPieces, setEliminatedPieces] = useState<EliminatedPiece[]>([])
   const [moveHistory, setMoveHistory] = useState<string[]>([])
-  const engineSide: Color = 'b'
+  const [engineSide, setEngineSide] = useState<Color | null>('b')
   const [isEngineThinking, setIsEngineThinking] = useState<boolean>(false)
+  const ENGINE_URL = (import.meta as any).env?.VITE_ENGINE_URL || '/engine/bestmove'
+  const ENGINE_TIMEOUT_MS = Number((import.meta as any).env?.VITE_ENGINE_TIMEOUT_MS || 10000)
 
   const pieces: BoardPiece[] = useMemo(() => {
-    //const board = engineRef.current.board()
     const result: BoardPiece[] = []
-    // chess.js board is 8x8 [rank][file] with a-f names; we'll compute square names
     for (let rank = 8; rank >= 1; rank -= 1) {
       for (let file = 1; file <= 8; file += 1) {
         const squareName = (String.fromCharCode(96 + file) + rank) as SquareName
@@ -74,10 +74,37 @@ export function useChessGame() {
     [],
   )
 
-  // Simple chess engine using depth-2 material evaluation
+  // Hosted engine with local fallback
   const getEngineMove = useCallback(async (): Promise<{ from: SquareName; to: SquareName } | null> => {
+    const fenNow = engineRef.current.fen()
+    // Try remote engine first
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), ENGINE_TIMEOUT_MS)
+      const payload = { fen: fenNow }
+      const resp = await fetch(ENGINE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+      if (resp.ok) {
+        const data: any = await resp.json()
+        const uci: string | undefined = data?.uci || data?.bestmove || data?.move
+        if (uci && typeof uci === 'string' && uci.length >= 4) {
+          const from = uci.slice(0, 2) as SquareName
+          const to = uci.slice(2, 4) as SquareName
+          return { from, to }
+        }
+      }
+    } catch (e) {
+      console.warn('[ENGINE] Remote call failed, falling back to local engine', e)
+      // ignore and fallback
+    }
+
+    // Fallback simple depth-2 engine
     const pieceValues: Record<string, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 }
-    
     const evaluate = (ch: Chess) => {
       const board = ch.board()
       let score = 0
@@ -90,20 +117,10 @@ export function useChessGame() {
       }
       return score
     }
-
     const sideToMove = engineRef.current.turn() as Color
     const root = new Chess(engineRef.current.fen())
     const moves = root.moves({ verbose: true }) as Move[]
     if (!moves.length) return null
-
-    // Get PGN representation of current position
-    const currentPgn = engineRef.current.pgn()
-    const currentFen = engineRef.current.fen()
-    
-    console.log('📥 INPUT to Engine:')
-    console.log('  PGN:', currentPgn || '(starting position)')
-    console.log('  FEN:', currentFen)
-
     let bestScore = sideToMove === 'w' ? -Infinity : Infinity
     let best: Move | null = null
     for (const mv of moves) {
@@ -128,23 +145,12 @@ export function useChessGame() {
         replyScore = oppBest
       }
       if (sideToMove === 'w') {
-        if (replyScore > bestScore) {
-          bestScore = replyScore
-          best = mv
-        }
+        if (replyScore > bestScore) { bestScore = replyScore; best = mv }
       } else {
-        if (replyScore < bestScore) {
-          bestScore = replyScore
-          best = mv
-        }
+        if (replyScore < bestScore) { bestScore = replyScore; best = mv }
       }
     }
     const chosen = best || moves[0]
-    
-    console.log('📤 OUTPUT from Engine:')
-    console.log('  UCI move:', `${chosen.from}${chosen.to}`)
-    console.log('  PGN notation:', chosen.san)
-    
     return { from: chosen.from as SquareName, to: chosen.to as SquareName }
   }, [])
 
@@ -152,27 +158,36 @@ export function useChessGame() {
   const turn: Color = engineRef.current.turn() as Color
   const isGameOver = engineRef.current.isGameOver?.() ?? engineRef.current.isGameOver()
   
-  useMemo(() => {}, [fen]) // noop to tie updates to position changes
 
   useEffect(() => {
     if (isGameOver) return
-    if (turn !== engineSide) return
+    if (!engineSide || turn !== engineSide) return
     if (isEngineThinking) return
 
-    let cancelled = false
     setIsEngineThinking(true)
-    ;(async () => {
-      const move = await getEngineMove()
-      if (!cancelled && move) {
-        tryMove(move.from, move.to)
+    
+    let cancelled = false
+    const executeMove = async () => {
+      try {
+        const move = await getEngineMove()
+        if (!cancelled && move) {
+          tryMove(move.from, move.to)
+        }
+      } catch (error) {
+        console.error('[ENGINE] Error during move execution:', error)
+      } finally {
+        if (!cancelled) {
+          setIsEngineThinking(false)
+        }
       }
-      if (!cancelled) setIsEngineThinking(false)
-    })()
+    }
+
+    executeMove()
 
     return () => {
       cancelled = true
     }
-  }, [engineSide, turn, isGameOver, isEngineThinking, getEngineMove, tryMove])
+  }, [engineSide, turn, isGameOver])
 
   const reset = useCallback(() => {
     engineRef.current = new Chess()
@@ -189,7 +204,6 @@ export function useChessGame() {
 
   return {
     fen,
-    pgn: engineRef.current.pgn(), // Add PGN export
     pieces,
     selected,
     setSelected,
@@ -205,6 +219,7 @@ export function useChessGame() {
     inCheck: engineRef.current.inCheck?.() ?? engineRef.current.isCheck?.(),
     gameOver: engineRef.current.isGameOver?.() ?? engineRef.current.isGameOver(),
     engineSide,
+    setEngineSide,
     isEngineThinking,
   }
 }

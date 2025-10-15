@@ -115,7 +115,7 @@ function ChessBoard({ pieces, selected, setSelected, legalMovesFrom, tryMove, tu
       </div>
       <div className="board-stack">
         <div className="chessboard-grid" role="grid" aria-label="Chessboard">
-        {isEngineThinking ? <div className="engine-thinking" aria-live="polite">Engine thinking…</div> : null}
+        {isEngineThinking ? <div className="engine-thinking" aria-live="polite">Waiting on engine response…</div> : null}
         {squares.map((sq) => {
           const name = coordsToName(sq.file, sq.rank)
           const isSelected = selected === (name as any)

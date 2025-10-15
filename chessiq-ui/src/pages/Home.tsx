@@ -14,9 +14,6 @@ function HomePage() {
       <main className="home-main">
         <div className="home-game-layout">
           <section className="home-board">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-              {/* <span style={{ fontSize: '0.9rem', color: '#9aa1b5' }}>Opponent: Computer (plays Black)</span> */}
-            </div>
             <ChessBoard
               pieces={game.pieces}
               selected={game.selected as any}
