@@ -4,14 +4,14 @@
     "size": 118331801600,
     "mtime": 1759340710
   },
-  "cookie": 243977539,
-  "processed": 104997,
-  "inserted": 102806,
-  "duplicates": 2190,
+  "cookie": 14429997047,
+  "processed": 6160644,
+  "inserted": 1117248,
+  "duplicates": 4374,
   "failed": 0,
-  "skipped_quota": 0,
-  "inserted_lt1500": 34433,
-  "db_lt1500_start": 11961,
-  "elapsed_sec": 906.62,
-  "saved_at": "2025-10-09T17:48:52.640923Z"
+  "skipped_quota": 5038649,
+  "inserted_lt1500": 435009,
+  "db_lt1500_start": 151814,
+  "elapsed_sec": 1803.8,
+  "saved_at": "2025-10-12T20:40:03.969678Z"
 }
