@@ -29,8 +29,8 @@ export function useChessGame() {
   const pieces: BoardPiece[] = useMemo(() => {
     const result: BoardPiece[] = []
     for (let rank = 8; rank >= 1; rank -= 1) {
-      for (let file = 1; file <= 8; file += 1) {
-        const squareName = (String.fromCharCode(96 + file) + rank) as SquareName
+      for (let file = 1; file <= 8; file++) {
+        const squareName = (String.fromCodePoint(96 + file) + rank) as SquareName
         const piece = engineRef.current.get(squareName)
         if (piece) {
           result.push({ square: squareName, type: piece.type, color: piece.color })
@@ -42,8 +42,8 @@ export function useChessGame() {
 
   const legalMovesFrom = useCallback(
     (from: SquareName): SquareName[] => {
-      const moves = engineRef.current.moves({ square: from, verbose: true }) as Move[]
-      return moves.map((m) => m.to as SquareName)
+      const moves = engineRef.current.moves({ square: from, verbose: true })
+      return moves.map((m) => m.to)
     },
     [],
   )
@@ -64,7 +64,7 @@ export function useChessGame() {
 
         setMoveHistory((prev) => [...prev, res.san])
         setFen(engineRef.current.fen())
-        setLastMove({ from: res.from as SquareName, to: res.to as SquareName })
+        setLastMove({ from: res.from, to: res.to })
         setSelected(null)
         setLastMoveAt(Date.now())
         return true
@@ -74,14 +74,12 @@ export function useChessGame() {
     [],
   )
 
-  // Hosted engine with local fallback
-  const getEngineMove = useCallback(async (): Promise<{ from: SquareName; to: SquareName } | null> => {
-    const fenNow = engineRef.current.fen()
-    // Try remote engine first
+  // Helper function to try remote engine
+  const tryRemoteEngine = useCallback(async (fen: string): Promise<{ from: SquareName; to: SquareName } | null> => {
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), ENGINE_TIMEOUT_MS)
-      const payload = { fen: fenNow }
+      const payload = { fen }
       const resp = await fetch(ENGINE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,62 +98,85 @@ export function useChessGame() {
       }
     } catch (e) {
       console.warn('[ENGINE] Remote call failed, falling back to local engine', e)
-      // ignore and fallback
     }
-
-    // Fallback simple depth-2 engine
-    const pieceValues: Record<string, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 }
-    const evaluate = (ch: Chess) => {
-      const board = ch.board()
-      let score = 0
-      for (const rank of board) {
-        for (const sq of rank) {
-          if (!sq) continue
-          const val = pieceValues[sq.type]
-          score += sq.color === 'w' ? val : -val
-        }
-      }
-      return score
-    }
-    const sideToMove = engineRef.current.turn() as Color
-    const root = new Chess(engineRef.current.fen())
-    const moves = root.moves({ verbose: true }) as Move[]
-    if (!moves.length) return null
-    let bestScore = sideToMove === 'w' ? -Infinity : Infinity
-    let best: Move | null = null
-    for (const mv of moves) {
-      const ch1 = new Chess(root.fen())
-      ch1.move({ from: mv.from as SquareName, to: mv.to as SquareName, promotion: 'q' })
-      const replies = ch1.moves({ verbose: true }) as Move[]
-      let replyScore: number
-      if (replies.length === 0) {
-        replyScore = evaluate(ch1)
-      } else {
-        let oppBest = sideToMove === 'w' ? Infinity : -Infinity
-        for (const rep of replies) {
-          const ch2 = new Chess(ch1.fen())
-          ch2.move({ from: rep.from as SquareName, to: rep.to as SquareName, promotion: 'q' })
-          const sc = evaluate(ch2)
-          if (sideToMove === 'w') {
-            if (sc < oppBest) oppBest = sc
-          } else {
-            if (sc > oppBest) oppBest = sc
-          }
-        }
-        replyScore = oppBest
-      }
-      if (sideToMove === 'w') {
-        if (replyScore > bestScore) { bestScore = replyScore; best = mv }
-      } else {
-        if (replyScore < bestScore) { bestScore = replyScore; best = mv }
-      }
-    }
-    const chosen = best || moves[0]
-    return { from: chosen.from as SquareName, to: chosen.to as SquareName }
+    return null
   }, [])
 
+  // Helper function to evaluate board position
+  const evaluatePosition = useCallback((ch: Chess): number => {
+    const pieceValues: Record<string, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 }
+    const board = ch.board()
+    let score = 0
+    for (const rank of board) {
+      for (const sq of rank) {
+        if (!sq) continue
+        const val = pieceValues[sq.type]
+        score += sq.color === 'w' ? val : -val
+      }
+    }
+    return score
+  }, [])
+
+  // Helper function to get best reply score
+  const getBestReplyScore = useCallback((ch: Chess, sideToMove: Color): number => {
+    const replies = ch.moves({ verbose: true })
+    if (replies.length === 0) {
+      return evaluatePosition(ch)
+    }
+
+    let oppBest = sideToMove === 'w' ? Infinity : -Infinity
+    for (const rep of replies) {
+      const ch2 = new Chess(ch.fen())
+      ch2.move({ from: rep.from, to: rep.to, promotion: 'q' })
+      const sc = evaluatePosition(ch2)
+      if ((sideToMove === 'w' && sc < oppBest) || (sideToMove === 'b' && sc > oppBest)) {
+        oppBest = sc
+      }
+    }
+    return oppBest
+  }, [evaluatePosition])
+
+  // Helper function for local engine fallback
+  const getLocalEngineMove = useCallback((): { from: SquareName; to: SquareName } | null => {
+    const sideToMove = engineRef.current.turn()
+    const root = new Chess(engineRef.current.fen())
+    const moves = root.moves({ verbose: true })
+    if (!moves.length) return null
+
+    let bestScore = sideToMove === 'w' ? -Infinity : Infinity
+    let best: Move | null = null
+
+    for (const mv of moves) {
+      const ch1 = new Chess(root.fen())
+      ch1.move({ from: mv.from, to: mv.to, promotion: 'q' })
+      const replyScore = getBestReplyScore(ch1, sideToMove)
+
+      if ((sideToMove === 'w' && replyScore > bestScore) || (sideToMove === 'b' && replyScore < bestScore)) {
+        bestScore = replyScore
+        best = mv
+      }
+    }
+
+    const chosen = best || moves[0]
+    return { from: chosen.from, to: chosen.to }
+  }, [getBestReplyScore])
+
+  // Hosted engine with local fallback
+  const getEngineMove = useCallback(async (): Promise<{ from: SquareName; to: SquareName } | null> => {
+    const fenNow = engineRef.current.fen()
+    
+    // Try remote engine first
+    const remoteMove = await tryRemoteEngine(fenNow)
+    if (remoteMove) {
+      return remoteMove
+    }
+
+    // Fallback to local engine
+    return getLocalEngineMove()
+  }, [tryRemoteEngine, getLocalEngineMove])
+
   // Trigger engine move when it's engine's turn (guarded to avoid double-queues)
-  const turn: Color = engineRef.current.turn() as Color
+  const turn: Color = engineRef.current.turn()
   const isGameOver = engineRef.current.isGameOver?.() ?? engineRef.current.isGameOver()
   
 
@@ -215,7 +236,7 @@ export function useChessGame() {
     lastMoveAt,
     eliminatedPieces,
     moveHistory,
-    turn: engineRef.current.turn() as Color,
+    turn: engineRef.current.turn(),
     inCheck: engineRef.current.inCheck?.() ?? engineRef.current.isCheck?.(),
     gameOver: engineRef.current.isGameOver?.() ?? engineRef.current.isGameOver(),
     engineSide,
