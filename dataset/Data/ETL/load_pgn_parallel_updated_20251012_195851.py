@@ -120,6 +120,16 @@ def elo_bin100_from_headers(h: Dict[str, str]) -> Optional[int]:
 def is_lt1500_from_bin(bin100: Optional[int]) -> bool:
     return bin100 is not None and bin100 < 1500
 
+# NEW: compute bin from core row fields (no headers available at flush time)
+def elo_bin100_from_core_row(row: Dict) -> Optional[int]:
+    w = _to_int(row.get("white_elo"))
+    b = _to_int(row.get("black_elo"))
+    if w is None and b is None: return None
+    if w is None: avg = b
+    elif b is None: avg = w
+    else: avg = (w + b) // 2
+    return (avg // 100) * 100 if avg is not None else None
+
 # -------------------- set-based batch flush --------------------
 def flush_batch_set_based(conn, batch_core: List[dict], batch_text: List[dict]) -> Tuple[int, int, int]:
     """
@@ -266,7 +276,9 @@ def worker_proc(job_q: mp.Queue, out_q: mp.Queue, site: str):
             out_q.put(("err", f"{type(e).__name__}: {e}", cookie))
 
 # -------------------- feeder (sequential reader; header-first) --------------------
-def feeder_proc(pgn_path: Path, start_cookie: int, quota_per_bin: int, per_bin_counts_snapshot: Dict[int,int], job_q: mp.Queue, out_q: mp.Queue):
+# MINIMAL CHANGE: accept inserted_counts so we can enforce live quota without DB hits.
+def feeder_proc(pgn_path: Path, start_cookie: int, quota_per_bin: int,
+                per_bin_counts_snapshot: Dict[int,int], inserted_counts, job_q: mp.Queue, out_q: mp.Queue):
     per_bin_counts = dict(per_bin_counts_snapshot)
     with pgn_path.open("r", encoding="utf-8", errors="replace", newline="") as fp:
         if start_cookie:
@@ -278,7 +290,8 @@ def feeder_proc(pgn_path: Path, start_cookie: int, quota_per_bin: int, per_bin_c
             for headers, cookie_after in read_game_headers_only(fp):
                 got_any = True
                 bin100 = elo_bin100_from_headers(headers)
-                if bin100 is not None and per_bin_counts.get(bin100, 0) >= quota_per_bin:
+                total = per_bin_counts.get(bin100, 0) + (inserted_counts.get(bin100, 0) if bin100 is not None else 0)
+                if bin100 is not None and total >= quota_per_bin:
                     out_q.put(("skip", None, None, cookie_after))  # writer will count as skipped
                 else:
                     # read raw slice (pos_before..cookie_after) and enqueue
@@ -363,13 +376,17 @@ def main():
     job_q: mp.Queue = ctx.Queue(maxsize=4000)
     out_q: mp.Queue = ctx.Queue(maxsize=4000)
 
+    # NEW: shared in-memory per-bin counters for this run
+    inserted_counts = ctx.Manager().dict()
+    bin_quota_snapshot: Dict[int, int] = {}
+    quota_reached_logged = set()
+
     try:
         with get_connection() as conn:
             bin_counts = fetch_existing_bin_counts(conn)
             print(f"[Startup] Loaded existing bin counts from DB (≥1500):")
             for b, c in sorted(bin_counts.items()):
                 print(f"  - Bin {b}: {c} games")
-            quota_reached_logged = set()
 
             ensure_staging_tables(conn)
 
@@ -377,10 +394,10 @@ def main():
             db_lt1500_start = count_lt1500(conn)
             print(f"Loaded {len(per_bin_counts)} existing bins. DB <1500 total: {db_lt1500_start:,}")
 
-            # start feeder
+            # start feeder (NOTE: pass inserted_counts)
             feeder = ctx.Process(
                 target=feeder_proc,
-                args=(pgn_path, start_cookie, args.quota_per_bin, per_bin_counts, job_q, out_q),
+                args=(pgn_path, start_cookie, args.quota_per_bin, per_bin_counts, inserted_counts, job_q, out_q),
                 daemon=True,
             )
             feeder.start()
@@ -406,6 +423,13 @@ def main():
                     inserted        += ins
                     duplicates      += dup
                     inserted_lt1500 += ins_lt
+
+                    # update per-bin in-memory counters BEFORE clearing
+                    for row in batch_core:
+                        b = elo_bin100_from_core_row(row)
+                        if b is not None:
+                            inserted_counts[b] = inserted_counts.get(b, 0) + 1
+
                     batch_core.clear()
                     batch_text.clear()
                     conn.commit()
@@ -423,6 +447,9 @@ def main():
                         "inserted_lt1500": inserted_lt1500,
                         "db_lt1500_start": db_lt1500_start,
                         "elapsed_sec": round(time.time() - t0, 2),
+                        # NEW: persist latest snapshot + quota
+                        "bin_quota_snapshot": bin_quota_snapshot,
+                        "quota_per_bin": args.quota_per_bin,
                     })
 
                 while True:
@@ -485,6 +512,9 @@ def main():
 
                         if len(batch_core) >= args.batch_size:
                             do_flush()
+                            # refresh snapshot for checkpoint after a flush
+                            all_bins = set(per_bin_counts) | set(inserted_counts.keys())
+                            bin_quota_snapshot = {b: per_bin_counts.get(b,0) + inserted_counts.get(b,0) for b in all_bins}
                             save_ck()
                     elif msg == "err":
                         failed += 1
@@ -495,10 +525,32 @@ def main():
 
                     processed += 1
                     if processed % args.log_every == 0:
-                        print(f"Processed {processed:,} | +{inserted:,} (lt1500 +{inserted_lt1500:,}) | dup {duplicates:,} | fail {failed:,} | skip_quota {skipped_quota:,}")
+                        # compact live status appended to your existing line
+                        all_bins = set(per_bin_counts) | set(inserted_counts.keys())
+                        totals = {b: per_bin_counts.get(b,0) + inserted_counts.get(b,0) for b in all_bins}
+                        full_bins = [b for b, t in totals.items() if t >= args.quota_per_bin]
+                        # top 3 bins with most remaining (or just first 3 sorted by remaining desc)
+                        remain_pairs = [(b, args.quota_per_bin - totals[b]) for b in all_bins if totals[b] < args.quota_per_bin]
+                        remain_pairs.sort(key=lambda x: x[1], reverse=True)
+                        remain_preview = ", ".join(f"{b}:{r}" for b, r in remain_pairs[:3]) if remain_pairs else "—"
+                        # side-effect: update snapshot for checkpoint
+                        bin_quota_snapshot = totals
+                        # print once when a bin becomes newly full
+                        for b in full_bins:
+                            if b not in quota_reached_logged:
+                                print(f"  🚫 Bin {b} reached quota ({totals[b]}/{args.quota_per_bin}); skipping further games for this bin.")
+                                quota_reached_logged.add(b)
+
+                        print(
+                            f"Processed {processed:,} | +{inserted:,} (lt1500 +{inserted_lt1500:,}) | "
+                            f"dup {duplicates:,} | fail {failed:,} | skip_quota {skipped_quota:,} | "
+                            f"bins_full {len(full_bins)} | remain {remain_preview}"
+                        )
 
                 # final flush + checkpoint
                 do_flush()
+                all_bins = set(per_bin_counts) | set(inserted_counts.keys())
+                bin_quota_snapshot = {b: per_bin_counts.get(b,0) + inserted_counts.get(b,0) for b in all_bins}
                 save_ck()
                 print("✅ Done. Checkpoint saved.")
 
