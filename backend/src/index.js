@@ -5,13 +5,20 @@ const authRoutes = require('./routes/auth');
 const testRoutes = require('./routes/testdb');
 
 const app = express();
-app.use(express.json());
 
-app.use('/auth', authRoutes);
-app.use('/db', testdbRoutes);
+// CORS middleware - MUST be first!
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+app.use(express.json());
 const invitesRouter = require('./routes/invites');
-app.use('/', invitesRouter); // provides /coach/invites, /invites/:token, /auth/signup-from-invite
-;
 
 const { verifyConnection } = require('./services/mailer');
 verifyConnection().then(() => {
@@ -21,14 +28,10 @@ verifyConnection().then(() => {
 });
 
 const PORT = process.env.PORT || 3000;
-const allowedOrigins = process.env.CLIENT_ORIGIN
-  ? process.env.CLIENT_ORIGIN.split(',').map((origin) => origin.trim())
-  : ['http://localhost:5173'];
 
-app.use(cors({ origin: allowedOrigins, credentials: true }));
-app.use(express.json());
-
+// Routes (after CORS)
 app.use('/auth', authRoutes);
-app.use('/', testRoutes);
+app.use('/db', testRoutes);
+app.use('/', invitesRouter); // provides /coach/invites, /invites/:token, /auth/signup-from-invite
 
 app.listen(PORT, () => console.log(`🚀 http://localhost:${PORT}`));
