@@ -1,20 +1,22 @@
 {
-  "name": "backend",
+  "name": "deepchessiq-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "description": "DeepChessIQ Node.js API",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "echo \"No tests yet\" && exit 0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
-    "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
-    "cores": "^0.8.5",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
+    "dotenv": "^16.4.5",
     "express": "^5.1.0",
     "joi": "^18.0.1",
     "jsonwebtoken": "^9.0.2",
