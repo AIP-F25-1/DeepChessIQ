@@ -167,12 +167,13 @@
   flex-direction: column;
   gap: 1.4rem;
   box-shadow: 0 28px 58px rgba(5, 8, 18, 0.5);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: all 0.25s ease;
 }
 
 .coach-card:hover {
   transform: translateY(-10px);
-  box-shadow: 0 40px 68px rgba(5, 8, 18, 0.6);
+  box-shadow: 0 40px 68px rgba(5, 8, 18, 0.6), 0 0 0 2px rgba(139, 92, 246, 0.3);
+  border-color: rgba(139, 92, 246, 0.4);
 }
 
 .coach-card-head {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import Navbar from '../components/navbar/Navbar'
+import PlayerDetailsModal, { type PlayerDetails } from '../components/PlayerDetailsModal'
 import './coach-dashboard.css'
 
 const demoStudents = [
@@ -31,7 +32,7 @@ const demoStudents = [
   },
   {
     id: 'stu-04',
-    name: 'Liam O’Connor',
+    name: "Liam O'Connor",
     rating: 1348,
     progressDelta: 12,
     focus: 'Tactical awareness',
@@ -39,17 +40,106 @@ const demoStudents = [
   },
 ]
 
+// Static player details data for each student
+const playerDetailsData: Record<string, PlayerDetails> = {
+  'stu-01': {
+    id: 'stu-01',
+    name: 'Ava Chen',
+    email: 'ava.chen@example.com',
+    joinDate: 'January 15, 2025',
+    currentRating: 1420,
+    peakRating: 1485,
+    totalGamesPlayed: 127,
+    wins: 68,
+    losses: 45,
+    draws: 14,
+    winRatePercentage: 53.5,
+    currentStreak: { type: 'win', count: 3 },
+    averageGameDuration: '18 min',
+    ratingChangeLast30Days: 35,
+    gamesPlayedThisWeek: 12,
+    lastCheckInDate: 'October 20, 2025',
+  },
+  'stu-02': {
+    id: 'stu-02',
+    name: 'Mateo Ruiz',
+    email: 'mateo.ruiz@example.com',
+    joinDate: 'December 5, 2024',
+    currentRating: 1565,
+    peakRating: 1620,
+    totalGamesPlayed: 203,
+    wins: 105,
+    losses: 82,
+    draws: 16,
+    winRatePercentage: 51.7,
+    currentStreak: { type: 'win', count: 2 },
+    averageGameDuration: '22 min',
+    ratingChangeLast30Days: 18,
+    gamesPlayedThisWeek: 9,
+    lastCheckInDate: 'October 19, 2025',
+  },
+  'stu-03': {
+    id: 'stu-03',
+    name: 'Priya Desai',
+    email: 'priya.desai@example.com',
+    joinDate: 'November 10, 2024',
+    currentRating: 1704,
+    peakRating: 1750,
+    totalGamesPlayed: 289,
+    wins: 162,
+    losses: 98,
+    draws: 29,
+    winRatePercentage: 56.1,
+    currentStreak: { type: 'loss', count: 1 },
+    averageGameDuration: '25 min',
+    ratingChangeLast30Days: 22,
+    gamesPlayedThisWeek: 8,
+    lastCheckInDate: 'October 21, 2025',
+  },
+  'stu-04': {
+    id: 'stu-04',
+    name: 'Liam O\'Connor',
+    email: 'liam.oconnor@example.com',
+    joinDate: 'February 28, 2025',
+    currentRating: 1348,
+    peakRating: 1395,
+    totalGamesPlayed: 94,
+    wins: 42,
+    losses: 46,
+    draws: 6,
+    winRatePercentage: 44.7,
+    currentStreak: { type: 'none', count: 0 },
+    averageGameDuration: '15 min',
+    ratingChangeLast30Days: 12,
+    gamesPlayedThisWeek: 7,
+    lastCheckInDate: 'October 18, 2025',
+  },
+}
+
 function CoachDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteLink, setInviteLink] = useState('')
   const [copied, setCopied] = useState(false)
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerDetails | null>(null)
+  
   function scrollToInvite() {
     const el = document.getElementById('coach-invite')
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
+  }
+
+  function handlePlayerCardClick(studentId: string) {
+    const playerDetails = playerDetailsData[studentId]
+    if (playerDetails) {
+      setSelectedPlayer(playerDetails)
+    }
+  }
+
+  function closePlayerModal() {
+    setSelectedPlayer(null)
   }
 
   function generateInviteLink() {
@@ -220,7 +310,12 @@ This will associate your account with my coaching roster.
 
           <div className="coach-grid">
             {demoStudents.map((student) => (
-              <article className="coach-card" key={student.id}>
+              <article 
+                className="coach-card" 
+                key={student.id}
+                onClick={() => handlePlayerCardClick(student.id)}
+                style={{ cursor: 'pointer' }}
+              >
                 <header className="coach-card-head">
                   <div className="coach-card-ident">
                     <div className="coach-card-meta">
@@ -243,10 +338,18 @@ This will associate your account with my coaching roster.
                   </div>
                 </dl>
                 <footer className="coach-card-actions">
-                  <button type="button" className="btn-primary">
+                  <button 
+                    type="button" 
+                    className="btn-primary"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     Review plan
                   </button>
-                  <button type="button" className="btn-ghost">
+                  <button 
+                    type="button" 
+                    className="btn-ghost"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     Send check-in
                   </button>
                 </footer>
@@ -272,6 +375,9 @@ This will associate your account with my coaching roster.
           </div>
         </section>
       </main>
+
+      {/* Player Details Modal */}
+      <PlayerDetailsModal player={selectedPlayer} onClose={closePlayerModal} />
     </div>
   )
 }
