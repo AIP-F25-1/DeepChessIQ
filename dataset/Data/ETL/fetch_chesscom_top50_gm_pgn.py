@@ -100,8 +100,8 @@ def main():
 
     print(f"[1/4] Fetching leaderboards for category '{args.category}' ...")
     gms = top50_usernames(args.category, session)
-    if args.max-players and len(gms) > args.max-players:
-        gms = gms[:args.max-players]
+    if args.max_players and len(gms) > args.max_players:
+        gms = gms[:args.max_players]
     print(f"  → Found {len(gms)} GM usernames: {', '.join(gms[:10])}{' ...' if len(gms)>10 else ''}")
 
     # Open output PGN file (append mode to allow resuming)
