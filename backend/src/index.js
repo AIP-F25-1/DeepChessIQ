@@ -5,6 +5,10 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const testdbRoutes = require('./routes/testdb');
 const invitesRouter = require('./routes/invites');
+const profileRoutes = require('./routes/profile');
+const settingsRoutes = require('./routes/settings');
+const gamesRoutes = require('./routes/games');
+const statisticsRoutes = require('./routes/statistics');
 const { verifyConnection } = require('./services/mailer');
 
 const app = express();
@@ -49,6 +53,12 @@ app.use('/db', testdbRoutes);
  *   POST   /auth/signup-from-invite
  */
 app.use('/', invitesRouter);
+
+/** API Routes */
+app.use('/api/profile', profileRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/games', gamesRoutes);
+app.use('/api/statistics', statisticsRoutes);
 
 /** SMTP self-check (non-blocking) */
 verifyConnection()

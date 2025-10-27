@@ -1,105 +1,57 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../AuthContext'
 import Navbar from '../components/navbar/Navbar'
+import { gamesApi, type Game } from '../services/api'
 import './game-library.css'
-
-type GameRecord = {
-  id: string
-  date: string
-  opponent: string
-  result: 'win' | 'loss' | 'draw'
-  moves: number
-  opening: string
-  timeControl: string
-  rating: number
-  ratingChange: number
-}
-
-// Static demo data
-const demoGames: GameRecord[] = [
-  {
-    id: 'game-001',
-    date: '2025-10-27',
-    opponent: 'ChessIQ Bot',
-    result: 'win',
-    moves: 42,
-    opening: 'Sicilian Defense',
-    timeControl: '10+0',
-    rating: 1520,
-    ratingChange: 12,
-  },
-  {
-    id: 'game-002',
-    date: '2025-10-26',
-    opponent: 'ChessIQ Bot',
-    result: 'loss',
-    moves: 38,
-    opening: 'Italian Game',
-    timeControl: '10+0',
-    rating: 1508,
-    ratingChange: -8,
-  },
-  {
-    id: 'game-003',
-    date: '2025-10-26',
-    opponent: 'ChessIQ Bot',
-    result: 'draw',
-    moves: 56,
-    opening: 'Queen\'s Gambit',
-    timeControl: '10+0',
-    rating: 1516,
-    ratingChange: 0,
-  },
-  {
-    id: 'game-004',
-    date: '2025-10-25',
-    opponent: 'ChessIQ Bot',
-    result: 'win',
-    moves: 35,
-    opening: 'French Defense',
-    timeControl: '10+0',
-    rating: 1516,
-    ratingChange: 10,
-  },
-  {
-    id: 'game-005',
-    date: '2025-10-24',
-    opponent: 'ChessIQ Bot',
-    result: 'loss',
-    moves: 44,
-    opening: 'Ruy Lopez',
-    timeControl: '10+0',
-    rating: 1506,
-    ratingChange: -12,
-  },
-  {
-    id: 'game-006',
-    date: '2025-10-23',
-    opponent: 'ChessIQ Bot',
-    result: 'win',
-    moves: 48,
-    opening: 'King\'s Indian Defense',
-    timeControl: '10+0',
-    rating: 1518,
-    ratingChange: 14,
-  },
-]
 
 function GameLibrary() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const [games, setGames] = useState<Game[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [filterResult, setFilterResult] = useState<'all' | 'win' | 'loss' | 'draw'>('all')
   const [sortBy, setSortBy] = useState<'date' | 'rating' | 'moves'>('date')
 
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!user) {
+      navigate('/signin')
+    }
+  }, [user, navigate])
+
+  // Fetch games from API
+  useEffect(() => {
+    const fetchGames = async () => {
+      if (!user) return
+
+      try {
+        setIsLoading(true)
+        setError(null)
+        const response = await gamesApi.list({ limit: 100 })
+        setGames(response.games)
+      } catch (err: any) {
+        console.error('Failed to fetch games:', err)
+        setError('Failed to load games. Please try again.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchGames()
+  }, [user])
+
   const filteredGames = useMemo(() => {
-    let games = [...demoGames]
+    let filteredList = [...games]
 
     // Filter by result
     if (filterResult !== 'all') {
-      games = games.filter((game) => game.result === filterResult)
+      filteredList = filteredList.filter((game) => game.result === filterResult)
     }
 
     // Sort
-    games.sort((a, b) => {
+    filteredList.sort((a, b) => {
       if (sortBy === 'date') {
         return new Date(b.date).getTime() - new Date(a.date).getTime()
       }
@@ -112,17 +64,17 @@ function GameLibrary() {
       return 0
     })
 
-    return games
-  }, [filterResult, sortBy])
+    return filteredList
+  }, [games, filterResult, sortBy])
 
   const stats = useMemo(() => {
-    const wins = demoGames.filter((g) => g.result === 'win').length
-    const losses = demoGames.filter((g) => g.result === 'loss').length
-    const draws = demoGames.filter((g) => g.result === 'draw').length
-    const winRate = demoGames.length > 0 ? ((wins / demoGames.length) * 100).toFixed(1) : '0.0'
+    const wins = games.filter((g) => g.result === 'win').length
+    const losses = games.filter((g) => g.result === 'loss').length
+    const draws = games.filter((g) => g.result === 'draw').length
+    const winRate = games.length > 0 ? ((wins / games.length) * 100).toFixed(1) : '0.0'
 
     return { wins, losses, draws, winRate }
-  }, [])
+  }, [games])
 
   const getResultIcon = (result: string) => {
     if (result === 'win') return '✓'
@@ -141,6 +93,8 @@ function GameLibrary() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
+  if (!user) return null
+
   return (
     <div className="game-library">
       <Navbar />
@@ -152,12 +106,26 @@ function GameLibrary() {
           </div>
         </header>
 
-        {/* Stats Overview */}
-        <section className="game-library-stats">
-          <div className="stat-card">
-            <div className="stat-label">Total Games</div>
-            <div className="stat-value">{demoGames.length}</div>
+        {isLoading ? (
+          <div className="game-library-loading">
+            <div className="spinner"></div>
+            <p>Loading games...</p>
           </div>
+        ) : error ? (
+          <div className="game-library-error">
+            <p>{error}</p>
+            <button className="btn-primary" onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Stats Overview */}
+            <section className="game-library-stats">
+              <div className="stat-card">
+                <div className="stat-label">Total Games</div>
+                <div className="stat-value">{games.length}</div>
+              </div>
           <div className="stat-card stat-card-win">
             <div className="stat-label">Wins</div>
             <div className="stat-value">{stats.wins}</div>
@@ -279,6 +247,8 @@ function GameLibrary() {
             ))
           )}
         </section>
+          </>
+        )}
       </main>
     </div>
   )

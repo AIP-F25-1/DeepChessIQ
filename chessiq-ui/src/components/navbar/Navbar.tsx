@@ -1,12 +1,32 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
+import { statisticsApi } from '../../services/api'
 import './navbar.css'
 
 function Navbar() {
   const { user, signOut } = useAuth()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [userRating, setUserRating] = useState<number | null>(null)
+
+  // Fetch user rating
+  useEffect(() => {
+    const fetchRating = async () => {
+      // Only fetch if user is logged in AND has a token
+      if (!user || !user.token) return
+
+      try {
+        const stats = await statisticsApi.get()
+        setUserRating(stats.currentRating)
+      } catch (error) {
+        // Silently fail - rating is optional
+        console.debug('Could not fetch rating:', error)
+      }
+    }
+
+    fetchRating()
+  }, [user])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -62,6 +82,9 @@ function Navbar() {
               aria-expanded={dropdownOpen}
               aria-haspopup="true"
             >
+              {userRating !== null && (
+                <span className="nav-user-rating">{userRating}</span>
+              )}
               <span className="nav-user-name">{user.username}</span>
               <span className={`nav-dropdown-arrow ${dropdownOpen ? 'open' : ''}`}>▼</span>
             </button>
