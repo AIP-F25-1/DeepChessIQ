@@ -1,0 +1,156 @@
+.basic-info-section {
+  background: linear-gradient(150deg, rgba(18, 21, 32, 0.92), rgba(12, 13, 18, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: 2.5rem;
+}
+
+.basic-info-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.5rem;
+}
+
+.basic-info-description {
+  font-size: 1rem;
+  color: rgba(226, 229, 243, 0.7);
+  margin: 0 0 2rem;
+}
+
+.basic-info-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.avatar-upload {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.avatar-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(109, 40, 217, 0.3));
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.avatar-upload-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.avatar-hint {
+  font-size: 0.85rem;
+  color: rgba(226, 229, 243, 0.6);
+  margin: 0;
+}
+
+.basic-info-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.basic-info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.basic-info-field label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(226, 229, 243, 0.9);
+}
+
+.basic-info-input,
+.basic-info-select,
+.basic-info-textarea {
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.basic-info-input:hover,
+.basic-info-select:hover,
+.basic-info-textarea:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.basic-info-input:focus,
+.basic-info-select:focus,
+.basic-info-textarea:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.basic-info-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.basic-info-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.basic-info-hint {
+  font-size: 0.85rem;
+  color: rgba(226, 229, 243, 0.6);
+  margin: -0.25rem 0 0;
+}
+
+.basic-info-save-btn {
+  align-self: flex-start;
+  min-width: 160px;
+}
+
+@media (max-width: 640px) {
+  .basic-info-section {
+    padding: 1.5rem;
+  }
+
+  .avatar-upload {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .avatar-preview {
+    width: 100px;
+    height: 100px;
+  }
+}
+

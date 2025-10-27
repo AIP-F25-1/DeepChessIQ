@@ -33,9 +33,12 @@ type ChessBoardProps = {
   eliminatedPieces: { type: 'p' | 'n' | 'b' | 'r' | 'q' | 'k'; color: 'w' | 'b' }[]
   engineSide: 'w' | 'b' | null
   isEngineThinking: boolean
+  onImportPgn?: () => void
+  onExportPgn?: () => void
+  canExport?: boolean
 }
 
-function ChessBoard({ pieces, selected, setSelected, legalMovesFrom, tryMove, turn, lastMove, gameStartAt, lastMoveAt, eliminatedPieces, engineSide, isEngineThinking }: ChessBoardProps) {
+function ChessBoard({ pieces, selected, setSelected, legalMovesFrom, tryMove, turn, lastMove, gameStartAt, lastMoveAt, eliminatedPieces, engineSide, isEngineThinking, onImportPgn, onExportPgn, canExport }: ChessBoardProps) {
   const squares = buildBoard()
   const [nowTs, setNowTs] = useState<number>(() => Date.now())
   useEffect(() => {
@@ -112,6 +115,20 @@ function ChessBoard({ pieces, selected, setSelected, legalMovesFrom, tryMove, tu
           <EliminatedPieces pieces={eliminatedPieces} playerColor="w" playerName="White" />
           <EliminatedPieces pieces={eliminatedPieces} playerColor="b" playerName="Black" />
         </div>
+        {(onImportPgn || onExportPgn) && (
+          <div className="pgn-buttons-sidebar">
+            {onImportPgn && (
+              <button className="btn-primary" onClick={onImportPgn} type="button">
+                📥 Import PGN
+              </button>
+            )}
+            {onExportPgn && (
+              <button className="btn-primary" onClick={onExportPgn} disabled={!canExport} type="button">
+                📤 Export PGN
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <div className="board-stack">
         <div className="chessboard-grid" role="grid" aria-label="Chessboard">

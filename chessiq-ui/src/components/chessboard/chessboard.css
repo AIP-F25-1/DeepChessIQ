@@ -37,6 +37,24 @@
   gap: 16px;
 }
 
+.pgn-buttons-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 8px;
+}
+
+.pgn-buttons-sidebar button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+}
+
+.pgn-buttons-sidebar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .timer-card {
   display: flex;
   flex-direction: column;

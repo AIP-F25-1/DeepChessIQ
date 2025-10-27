@@ -1,0 +1,124 @@
+.settings-page {
+  min-height: 100vh;
+  background: linear-gradient(185deg, rgba(14, 15, 22, 0.94), rgba(15, 17, 26, 0.97));
+  color: #f5f7ff;
+}
+
+.settings-main {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3.2rem 1.8rem 4.4rem;
+}
+
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+.settings-header {
+  text-align: center;
+}
+
+.settings-header h1 {
+  font-size: 2.5rem;
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.settings-header p {
+  font-size: 1.1rem;
+  color: rgba(226, 229, 243, 0.7);
+  margin: 0;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.settings-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: linear-gradient(150deg, rgba(18, 21, 32, 0.92), rgba(12, 13, 18, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 1rem;
+  position: sticky;
+  top: 100px;
+}
+
+.settings-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.2rem;
+  background: none;
+  border: none;
+  border-radius: 14px;
+  color: rgba(226, 229, 243, 0.7);
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(226, 229, 243, 0.9);
+}
+
+.settings-tab.active {
+  background: rgba(139, 92, 246, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.settings-tab-icon {
+  font-size: 1.2rem;
+}
+
+.settings-content {
+  background: linear-gradient(150deg, rgba(18, 21, 32, 0.92), rgba(12, 13, 18, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: 2.5rem;
+  min-height: 500px;
+}
+
+@media (max-width: 968px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-sidebar {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .settings-tab {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .settings-main {
+    padding: 2rem 1rem;
+  }
+
+  .settings-content {
+    padding: 1.5rem;
+  }
+
+  .settings-header h1 {
+    font-size: 2rem;
+  }
+}
+

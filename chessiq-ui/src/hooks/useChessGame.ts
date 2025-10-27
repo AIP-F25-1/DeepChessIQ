@@ -223,8 +223,34 @@ export function useChessGame() {
     setIsEngineThinking(false)
   }, [])
 
+  const getPgn = useCallback(() => {
+    return engineRef.current.pgn()
+  }, [])
+
+  const loadPgn = useCallback((pgn: string) => {
+    try {
+      engineRef.current.loadPgn(pgn)
+      setFen(engineRef.current.fen())
+      setSelected(null)
+      setLastMove(null)
+      setEliminatedPieces([])
+      
+      // Rebuild move history from loaded game
+      const history = engineRef.current.history()
+      setMoveHistory(history)
+      
+      setGameStartAt(Date.now())
+      setLastMoveAt(Date.now())
+      return true
+    } catch (error) {
+      console.error('Failed to load PGN:', error)
+      return false
+    }
+  }, [])
+
   return {
     fen,
+    pgn: getPgn(),
     pieces,
     selected,
     setSelected,
@@ -242,6 +268,7 @@ export function useChessGame() {
     engineSide,
     setEngineSide,
     isEngineThinking,
+    loadPgn,
   }
 }
 

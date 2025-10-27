@@ -1,9 +1,32 @@
+import { useState, useRef, useEffect } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../../AuthContext'
 import './navbar.css'
 
 function Navbar() {
   const { user, signOut } = useAuth()
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen)
+  }
+
+  const closeDropdown = () => {
+    setDropdownOpen(false)
+  }
 
   return (
     <header className="navbar">
@@ -14,16 +37,17 @@ function Navbar() {
         </Link>
       </div>
       <nav className="nav-links">
-        <NavLink to="/dashboard">
-          Dashboard
-        </NavLink>
-        {user?.role === 'coach' && (
-          <NavLink to="/coach">
-            Coach Dashboard
-          </NavLink>
-        )}
-        {!user && (
+        {user ? (
           <>
+            <NavLink to="/">Play</NavLink>
+            <NavLink to="/games">Games</NavLink>
+            {user.role === 'coach' && (
+              <NavLink to="/coach">Coach</NavLink>
+            )}
+          </>
+        ) : (
+          <>
+            <NavLink to="/dashboard">Dashboard</NavLink>
             <NavLink to="/signin">Sign in</NavLink>
             <NavLink to="/register">Register</NavLink>
           </>
@@ -31,12 +55,39 @@ function Navbar() {
       </nav>
       <div className="nav-auth">
         {user ? (
-          <>
-            <span className="nav-user">{user.username}</span>
-            <button className="btn-ghost" onClick={signOut} type="button">
-              Sign out
+          <div className="nav-user-menu" ref={dropdownRef}>
+            <button 
+              className="nav-user-button" 
+              onClick={toggleDropdown}
+              aria-expanded={dropdownOpen}
+              aria-haspopup="true"
+            >
+              <span className="nav-user-name">{user.username}</span>
+              <span className={`nav-dropdown-arrow ${dropdownOpen ? 'open' : ''}`}>▼</span>
             </button>
-          </>
+            
+            {dropdownOpen && (
+              <div className="nav-dropdown">
+                <Link to="/profile" className="nav-dropdown-item" onClick={closeDropdown}>
+                  <span className="nav-dropdown-icon">👤</span>
+                  View Profile
+                </Link>
+                <Link to="/settings" className="nav-dropdown-item" onClick={closeDropdown}>
+                  <span className="nav-dropdown-icon">⚙️</span>
+                  Settings
+                </Link>
+                <div className="nav-dropdown-divider" />
+                <button 
+                  className="nav-dropdown-item nav-dropdown-signout" 
+                  onClick={() => { signOut(); closeDropdown(); }}
+                  type="button"
+                >
+                  <span className="nav-dropdown-icon">🚪</span>
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <Link to="/signin" className="btn-ghost nav-signin">
             Sign in
