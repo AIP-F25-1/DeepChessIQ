@@ -83,10 +83,11 @@ This link expires in 7 days. If you weren’t expecting this, ignore this email.
 
 /** tiny helper to avoid HTML injection in the coach name */
 function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const str = String(s);
+  return str
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 }
 
 module.exports = {
