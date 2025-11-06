@@ -180,3 +180,20 @@ def bestmove(req: BestMoveReq):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Engine error: {e}")
+
+
+@app.post("/evaluate")
+def evaluate(req: BestMoveReq):
+    """Evaluate position without making a move."""
+    if sf is None:
+        raise HTTPException(
+            status_code=503, detail=init_error or "Stockfish not available"
+        )
+
+    _validate_fen(req.fen)
+
+    with sf_lock:
+        sf.set_fen_position(req.fen)
+        evaluation = sf.get_evaluation() if hasattr(sf, "get_evaluation") else None
+
+    return {"eval": evaluation, "used": {"mode": "eval"}}
