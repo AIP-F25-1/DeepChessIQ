@@ -10,6 +10,7 @@ const settingsRoutes = require('./routes/settings');
 const gamesRoutes = require('./routes/games');
 const statisticsRoutes = require('./routes/statistics');
 const { verifyConnection } = require('./services/mailer');
+const performanceMiddleware = require('./middleware/performance');
 
 const app = express();
 
@@ -39,6 +40,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+/** Performance monitoring middleware */
+app.use(performanceMiddleware);
 
 /** Health check */
 app.get('/healthz', (_req, res) => res.json({ ok: true }));
