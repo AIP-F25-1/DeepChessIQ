@@ -64,10 +64,15 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/games', gamesRoutes);
 app.use('/api/statistics', statisticsRoutes);
 
-/** SMTP self-check (non-blocking) */
-verifyConnection()
-  .then(() => console.log('SMTP ready'))
-  .catch(err => console.error('SMTP verify failed:', err.message));
+// Works in ESM or CommonJS
+void (async () => {
+  try {
+    await verifyConnection();
+    console.log('SMTP ready');
+  } catch (err) {
+    console.error('SMTP verify failed:', err instanceof Error ? err.message : err);
+  }
+})();
 
 /** Start */
 const PORT = Number(process.env.PORT) || 3000;
