@@ -1,0 +1,4 @@
+python-chess>=1.999
+pyodbc>=5.1
+pandas>=2.2
+tqdm>=4.66
