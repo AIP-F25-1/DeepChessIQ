@@ -64,13 +64,12 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/games', gamesRoutes);
 app.use('/api/statistics', statisticsRoutes);
 
-try {
-  await verifyConnection();
-  console.log('SMTP ready');
-} catch (err) {
-  console.error('SMTP verify failed:', err instanceof Error ? err.message : err);
-}
-
+verifyConnection()
+  .then(() => console.log('SMTP ready'))
+  .catch(err => {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('SMTP verify failed:', message)
+  })
 
 /** Start */
 const PORT = Number(process.env.PORT) || 3000;
