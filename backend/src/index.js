@@ -64,15 +64,13 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/games', gamesRoutes);
 app.use('/api/statistics', statisticsRoutes);
 
-// Works in ESM or CommonJS
-void (async () => {
-  try {
-    await verifyConnection();
-    console.log('SMTP ready');
-  } catch (err) {
-    console.error('SMTP verify failed:', err instanceof Error ? err.message : err);
-  }
-})();
+try {
+  await verifyConnection();
+  console.log('SMTP ready');
+} catch (err) {
+  console.error('SMTP verify failed:', err instanceof Error ? err.message : err);
+}
+
 
 /** Start */
 const PORT = Number(process.env.PORT) || 3000;
