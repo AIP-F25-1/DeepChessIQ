@@ -12,7 +12,7 @@ import './home.css'
 function HomePage() {
   const { user } = useAuth()
   const game = useChessGame()
-  const { moveHistory, turn, inCheck, gameOver, pgn, loadPgn, gameStartAt, lastMoveAt } = game
+  const { moveHistory, turn, inCheck, gameOver, pgn, loadPgn, gameStartAt, lastMoveAt, fen } = game
   const [showExportModal, setShowExportModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
   const [gameSaved, setGameSaved] = useState(false)
@@ -114,6 +114,7 @@ function HomePage() {
               currentTurn={turn}
               inCheck={inCheck}
               gameOver={gameOver}
+              fen={fen}
             />
           </aside>
         </div>

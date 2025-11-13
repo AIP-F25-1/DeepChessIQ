@@ -1,16 +1,22 @@
 import './commentary.css'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { commentaryApi } from '../../services/commentary'
 
 type CommentaryProps = {
   moveHistory: string[]
   currentTurn: 'w' | 'b'
   inCheck: boolean
   gameOver: boolean
+  fen: string
 }
 
-function Commentary({ moveHistory, currentTurn, inCheck, gameOver }: CommentaryProps) {
+function Commentary({ moveHistory, currentTurn, inCheck, gameOver, fen }: CommentaryProps) {
   const movesContainerRef = useRef<HTMLDivElement>(null)
   const movesEndRef = useRef<HTMLDivElement>(null)
+  const commentaryAbortRef = useRef<AbortController | null>(null)
+  const [commentary, setCommentary] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Auto-scroll the moves panel without affecting page scroll
   useEffect(() => {
@@ -42,21 +48,68 @@ function Commentary({ moveHistory, currentTurn, inCheck, gameOver }: CommentaryP
 
   const status = getGameStatus()
 
-  const getRandomCommentary = () => {
-    const commentaries = [
-      "An interesting opening choice by White! Both players are developing their pieces rapidly towards the center. The game is following classical principles with good control of key squares. It will be fascinating to see how the position unfolds as we transition into the middlegame phase.",
-      "The position is heating up with tension building in the center. White appears to have a slight initiative with better piece coordination, but Black's solid pawn structure provides a strong defensive foundation. Strategic planning will be crucial for both sides moving forward.",
-      "Black's pawn structure looks remarkably solid with no apparent weaknesses. The defensive setup demonstrates good understanding of positional chess principles. White will need to find creative ways to create attacking opportunities or risk a balanced endgame where Black's solid position could prove advantageous.",
-      "A tactical opportunity is emerging as the center becomes increasingly dynamic. Both players must be vigilant for tactical shots involving piece exchanges and pawn breaks. The next few moves will be critical in determining the character of the resulting middlegame position.",
-      "Material is perfectly equal on the board, but the position clearly favors the side with more active piece placement. Controlling open files and diagonals will be key to gaining a meaningful advantage. Watch how the players maneuver their pieces to dominate critical squares.",
-      "This game is remarkably well-balanced with both sides having equal chances for victory. Neither player has committed any significant errors yet, and the position remains rich with possibilities. The outcome will likely be determined by who can execute their plan more precisely in the critical middlegame phase.",
-      "The middlegame is rapidly approaching, and strategic planning becomes absolutely crucial at this stage. Players must carefully consider their pawn breaks, piece placement, and king safety. One hasty move could tip the balance decisively in favor of the opponent, so patience and precision are essential.",
-      "Excellent development by both players! The fight for central control is intense with neither side willing to concede the initiative. The position demonstrates textbook opening principles being applied effectively. We can expect a sharp and exciting game as both sides have built solid foundations for their attacking ambitions.",
-      "The pawn structure will play a decisive role in the approaching endgame. Weak pawns could become targets, while strong pawn chains provide safety and structure. Both players should be thinking several moves ahead, considering how the current pawn configuration might influence the game's final outcome.",
-      "A classical approach to the opening, demonstrating time-tested principles of chess strategy. This solid and reliable method has been employed by grandmasters for decades. The resulting position offers a balanced game with opportunities for both tactical shots and strategic maneuvering as play continues to develop.",
-    ]
-    return commentaries[moveHistory.length % commentaries.length]
-  }
+  useEffect(() => {
+    if (moveHistory.length === 0) {
+      commentaryAbortRef.current?.abort()
+      commentaryAbortRef.current = null
+      setCommentary(null)
+      setError(null)
+      setIsLoading(false)
+      return
+    }
+
+    const latestMove = moveHistory[moveHistory.length - 1]
+    const controller = new AbortController()
+
+    // Abort any in-flight request before starting a new one
+    commentaryAbortRef.current?.abort()
+    commentaryAbortRef.current = controller
+
+    const fetchCommentary = async () => {
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const response = await commentaryApi.getMoveCommentary(
+          {
+            fen: fen || null,
+            move: latestMove,
+          },
+          controller.signal,
+        )
+
+        const text =
+          typeof response.commentary === 'string' && response.commentary.trim().length > 0
+            ? response.commentary.trim()
+            : typeof response.summary === 'string' && response.summary.trim().length > 0
+            ? response.summary.trim()
+            : null
+
+        if (text) {
+          setCommentary(text)
+        } else {
+          setCommentary('Commentary is not available for this move yet.')
+        }
+      } catch (err: any) {
+        if (err?.name === 'AbortError') {
+          return
+        }
+        console.error('[Commentary] Failed to fetch commentary:', err)
+        setError('Unable to fetch commentary right now.')
+        setCommentary(null)
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    fetchCommentary()
+
+    return () => {
+      controller.abort()
+    }
+  }, [moveHistory, fen])
 
   return (
     <div className="commentary-section">
@@ -102,8 +155,14 @@ function Commentary({ moveHistory, currentTurn, inCheck, gameOver }: CommentaryP
         <div className="commentary-box-content">
           {moveHistory.length === 0 ? (
             <p className="commentary-text">Game commentary will appear here as you play...</p>
+          ) : isLoading ? (
+            <p className="commentary-text commentary-loading">Fetching commentary...</p>
+          ) : error ? (
+            <p className="commentary-text commentary-error">{error}</p>
+          ) : commentary ? (
+            <p className="commentary-text">{commentary}</p>
           ) : (
-            <p className="commentary-text">{getRandomCommentary()}</p>
+            <p className="commentary-text commentary-empty">Commentary is not available for this move yet.</p>
           )}
         </div>
       </div>
