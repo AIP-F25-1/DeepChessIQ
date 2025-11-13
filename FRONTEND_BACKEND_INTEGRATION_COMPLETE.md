@@ -247,6 +247,7 @@ Create `.env` file in `chessiq-ui/` directory:
 VITE_API_BASE_URL=http://localhost:3000
 VITE_ENGINE_URL=http://20.55.88.222:8001/bestmove
 VITE_ENGINE_TIMEOUT_MS=10000
+VITE_COMMENTARY_API_URL=http://localhost:5050/commentary
 ```
 
 ---

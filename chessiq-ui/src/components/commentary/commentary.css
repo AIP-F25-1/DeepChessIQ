@@ -209,6 +209,19 @@
   letter-spacing: 0.01em;
 }
 
+.commentary-loading {
+  color: #d8b4fe;
+}
+
+.commentary-error {
+  color: #fca5a5;
+  font-style: normal;
+}
+
+.commentary-empty {
+  color: #cbd5f5;
+}
+
 .analysis-header {
   font-size: 14px;
   font-weight: 600;

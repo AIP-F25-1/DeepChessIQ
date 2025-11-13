@@ -14,7 +14,11 @@ router.get('/', authGuard(), async (req, res) => {
     const { result: resultFilter, limit = 50, offset = 0 } = req.query;
 
     let whereClause = 'WHERE user_id = @userId';
-    const params = { userId, limit: parseInt(limit), offset: parseInt(offset) };
+    const params = {
+  userId,
+  limit: Number.parseInt(limit, 10),
+  offset: Number.parseInt(offset, 10),
+};
 
     if (resultFilter && ['win', 'loss', 'draw'].includes(resultFilter)) {
       whereClause += ' AND result = @resultFilter';
