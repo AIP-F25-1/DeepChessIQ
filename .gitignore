@@ -6,6 +6,16 @@ __pycache__/
 #sonarQube
 SonarQube/sonar-chess.bat
 SonarQube/sonar-project.properties
+
+#chess engine(stockfish)
+#tools/stockfish/*
+
+#data files
+#ai/data/
+ai/data/eval_trace_depth20.json
+ai/data/eval_trace_depth20.csv
+ai/data/eval_trace_time200.csv
+ai/data/eval_trace_time200.json
 # C extensions
 *.so
 
