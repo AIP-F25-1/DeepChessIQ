@@ -6,6 +6,16 @@ __pycache__/
 #sonarQube
 SonarQube/sonar-chess.bat
 SonarQube/sonar-project.properties
+
+#chess engine(stockfish)
+#tools/stockfish/*
+
+#data files
+#ai/data/
+ai/data/eval_trace_depth20.json
+ai/data/eval_trace_depth20.csv
+ai/data/eval_trace_time200.csv
+ai/data/eval_trace_time200.json
 # C extensions
 *.so
 
@@ -208,3 +218,68 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Node.js
+node_modules/
+build/
+dist/
+.next/
+.nuxt/
+.angular/
+server/
+coverage/
+coverage-*
+*.lcov
+*.log
+*.pid
+logs/
+
+# Package managers
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDE / OS
+.vscode/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Local env
+.env*
+*.local
+*.secret
+*.key
+!.env.example
+
+# Docker / containers
+.docker/
+Dockerfile.local
+**/docker-compose.override.yml
+
+# Misc
+*.iml
+*.tmp
+*.bak
+*.orig
+*.rej
+*.swp
+*.swo
+*.class
+*.user
+*.db
+*.sqlite3
+
+# Git
+.gitmodules
+.gitconfig
+"backend/src/db/" 

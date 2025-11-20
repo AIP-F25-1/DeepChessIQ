@@ -1,0 +1,19 @@
+# activate your env if needed
+conda activate deepchess   # or your venv
+
+# start the server (from repo root so .env is found)
+uvicorn ai.engine.engine_service:app --host 127.0.0.1 --port 8001
+
+
+#open new terminal
+curl.exe http://127.0.0.1:8001/ping
+# -> {"ok":true}
+curl.exe http://127.0.0.1:8001/info
+# confirm engine_path/threads/hash and initialized:true
+curl.exe http://127.0.0.1:8001/health
+# -> {"ready": true, "probe_move": "e2e4"}  (move may vary)
+# Best move (start position)
+Invoke-RestMethod -Uri http://127.0.0.1:8001/bestmove -Method Post `
+  -Body '{"fen":"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1","movetime":200}' `
+  -ContentType "application/json" | ConvertTo-Json -Depth 4
+#Expect a UCI move (e2e4 or d2d4 etc.), an eval, and a short PV.

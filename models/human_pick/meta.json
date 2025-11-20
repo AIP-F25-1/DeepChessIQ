@@ -1,0 +1,1 @@
+{"feat_cols": ["side", "cp", "mate", "depth", "pv_len", "engine_soft_p", "prior_freq", "prior_prob", "prior_mean_ms", "ply", "legal_count", "cp_to_best"], "time_feat_cols": null}
