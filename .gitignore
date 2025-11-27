@@ -20,6 +20,7 @@ test_env_metrics.py
 test_full_game.py
 test_multiple_games.py
 checkpoints
+.vs
 
 #data files
 ai/data/

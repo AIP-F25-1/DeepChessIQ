@@ -1,7 +1,0 @@
-{
-  "default": "maia-1500",
-  "models": {
-    "maia-1500": "/app/tools/lc0/networks/maia-1500.pb",
-    "lc0-small": "/app/tools/lc0/networks/small-net.pb.gz"
-  }
-}
