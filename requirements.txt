@@ -8,3 +8,8 @@ fastapi==0.115.5
 uvicorn[standard]==0.32.0
 torch==2.4.1      # single source of truth
 tensorboard
+
+python-dotenv
+stockfish==3.28.0
+python-chess
+requests

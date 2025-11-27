@@ -9,9 +9,11 @@ SonarQube/sonar-project.properties
 
 #chess engine(stockfish)
 #tools/stockfish/*
-
+ai\rl_train\smoke_env.py
+smoke_test.py
+ai\rlbot_lc0
 #data files
-#ai/data/
+ai/data/
 ai/data/eval_trace_depth20.json
 ai/data/eval_trace_depth20.csv
 ai/data/eval_trace_time200.csv
