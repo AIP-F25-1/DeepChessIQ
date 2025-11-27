@@ -1,8 +1,12 @@
 import ray
 from ray import tune
-from ray.rllib.algorithms.ppo import PPO
+from ray.rllib.algorithms.ppo import PPO  # noqa: F401  (ensures correct algo type)
 from ai.rl_train.config_ppo_vs_stockfish import get_ppo_config
 from ai.rl_train.env_stockfish import StockfishEnv
+from ray.rllib.models import ModelCatalog
+from ai.rl_train.masked_policy_model import MaskedChessPolicy
+
+ModelCatalog.register_custom_model("masked_chess_policy", MaskedChessPolicy)
 
 if __name__ == "__main__":
     ray.init()
@@ -14,14 +18,14 @@ if __name__ == "__main__":
 
     config = get_ppo_config()
 
-    # Legacy-compatible build (no build_algo on older RLlib)
-    algo = config.build()  # RLlib knows it's PPO from PPOConfig
+    # Build the PPO algorithm from config
+    algo = config.build()
 
     for i in range(1):
         result = algo.train()
         print(
-            f"Iteration {i}: reward_mean={result['episode_reward_mean']:.3f}, "
-            f"length_mean={result['episode_len_mean']:.1f}"
+            f"Iteration {i}: reward_mean={result.get('episode_reward_mean', 0.0):.3f}, "
+            f"length_mean={result.get('episode_len_mean', 0.0):.1f}"
         )
         if i % 10 == 0:
             ckpt = algo.save(f"checkpoints/ppo_stockfish_{i}")

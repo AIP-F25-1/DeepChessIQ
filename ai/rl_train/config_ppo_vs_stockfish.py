@@ -16,17 +16,23 @@ def get_ppo_config():
         "randomize_player_color": bool(int(os.getenv("RANDOMIZE_COLOR", 0))),
     }
 
-    # Model
+    # Model: custom masked policy over (8,8,19)
     cfg.model = {
-        "conv_filters": [
-            [32, [3, 3], 1],  # out: 8x8x32
-            [64, [3, 3], 1],  # out: 8x8x64
-        ],
-        "conv_activation": "relu",
-        "post_fcnet_hiddens": [256, 256],
-        "post_fcnet_activation": "relu",
-        "max_seq_len": 1,
+        "custom_model": "masked_chess_policy",  # name register with ModelCatalog
+        "custom_model_config": {
+            # pass conv + MLP layout into the custom model
+            "conv_filters": [
+                [32, [3, 3], 1],  # -> 8x8x32
+                [64, [3, 3], 1],  # -> 8x8x64
+            ],
+            "conv_activation": "relu",
+            "post_fcnet_hiddens": [256, 256],
+            "post_fcnet_activation": "relu",
+        },
+        # if your model shares layers between policy + value
+        "vf_share_layers": True,
     }
+
     cfg.framework("torch")
 
     # Training
