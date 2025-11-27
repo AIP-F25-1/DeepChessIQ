@@ -10,8 +10,20 @@ SonarQube/sonar-project.properties
 #chess engine(stockfish)
 #tools/stockfish/*
 
+# AI files to ignore
+#rl training environment
+ai\rl_train\smoke_env.py
+smoke_test.py
+ai\rlbot_lc0
+test_color_randomization.py
+test_env_metrics.py
+test_full_game.py
+test_multiple_games.py
+checkpoints
+.vs
+
 #data files
-#ai/data/
+ai/data/
 ai/data/eval_trace_depth20.json
 ai/data/eval_trace_depth20.csv
 ai/data/eval_trace_time200.csv
