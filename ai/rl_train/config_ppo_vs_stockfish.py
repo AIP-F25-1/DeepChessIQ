@@ -1,5 +1,9 @@
+# ai/rl_train/config_ppo_vs_stockfish.py
 import os
+
 from ray.rllib.algorithms.ppo import PPOConfig
+
+from .masked_policy_model import MaskedChessModel
 from .rllib_callbacks import ChessCallbacks
 
 
@@ -7,29 +11,28 @@ def get_ppo_config():
     cfg = PPOConfig()
 
     # Environment
-    cfg.environment("DeepChessVsStockfish-v0")
-    cfg.env_config = {
-        "stockfish_api": os.getenv("STOCKFISH_API", "http://127.0.0.1:8001"),
-        "movetime_ms": int(os.getenv("SF_MOVETIME_MS", 150)),
-        "use_shaping": int(os.getenv("USE_SHAPING", 1)),
-        "shaping_clip_cp": int(os.getenv("SHAPING_CLIP_CP", 50)),
-        "randomize_player_color": bool(int(os.getenv("RANDOMIZE_COLOR", 0))),
-    }
+    cfg.environment(
+        env="DeepChessVsStockfish-v0",
+        env_config={
+            "stockfish_api": os.getenv("STOCKFISH_API", "http://127.0.0.1:8001"),
+            "movetime_ms": int(os.getenv("SF_MOVETIME_MS", 150)),
+            "use_shaping": int(os.getenv("USE_SHAPING", 1)),
+            "shaping_clip_cp": int(os.getenv("SHAPING_CLIP_CP", 50)),
+            "randomize_player_color": bool(int(os.getenv("RANDOMIZE_COLOR", 0))),
+            "debug": bool(int(os.getenv("ENV_DEBUG", "0"))),
+        },
+    )
 
-    # Model
-    cfg.model = {
-        "conv_filters": [
-            [32, [3, 3], 1],  # out: 8x8x32
-            [64, [3, 3], 1],  # out: 8x8x64
-        ],
-        "conv_activation": "relu",
-        "post_fcnet_hiddens": [256, 256],
-        "post_fcnet_activation": "relu",
-        "max_seq_len": 1,
-    }
+    # Register custom model
+    cfg.model.update(
+        {
+            "custom_model": "masked_chess_model",
+            "custom_model_config": {},
+        }
+    )
     cfg.framework("torch")
 
-    # Training
+    # Training hyperparams
     cfg.training(
         gamma=0.99,
         lr=5e-5,
