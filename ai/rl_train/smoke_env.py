@@ -17,4 +17,4 @@ if __name__ == "__main__":
         )
         if term or trunc:
             break
-    print("Smoke OK.")
+    print("Smoke OK.") 
